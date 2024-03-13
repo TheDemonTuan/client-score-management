@@ -11,6 +11,10 @@
     @apply bg-gray-100;
   }
 
+  html,body {
+    @apply min-h-svh;
+  }
+
   *::-webkit-scrollbar,
   *::-webkit-scrollbar-thumb {
     width: 23.5px;
