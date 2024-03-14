@@ -15,14 +15,16 @@ import { Input } from "@/components/ui/v2/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterFormValidate, RegisterFormValidateSchema } from "./register-form.validate";
-import { useMutation } from "@tanstack/react-query";
-import { RegisterAuthBody, registerAuth } from "@/api/auth";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { RegisterAuthParams, registerAuth } from "@/api/auth";
 import { toast } from "react-toastify";
-import { ApiErrorResponse } from "@/lib/http";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useRouter } from "next/navigation";
 
 const RegisterForm = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
+
   const registerForm = useForm<RegisterFormValidate>({
     resolver: zodResolver(RegisterFormValidateSchema),
     defaultValues: {
@@ -34,15 +36,15 @@ const RegisterForm = () => {
   });
 
   const { mutate: registerMutate, isPending: registerIsPending } = useMutation<
-    UserResponse,
+    ApiSuccessResponse<UserResponse>,
     ApiErrorResponse,
-    RegisterAuthBody
+    RegisterAuthParams
   >({
     mutationFn: async (params) => await registerAuth(params),
-    onSuccess: () => {
+    onSuccess: (res) => {
       toast.success("Đăng ký thành công !");
       registerForm.reset();
-      router.replace("/");
+      queryClient.setQueryData(["auth"], res);
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message || "Đăng ký thất bại!");

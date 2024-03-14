@@ -14,15 +14,16 @@ import {
 import { Input } from "@/components/ui/v2/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { LoginAuthBody, loginAuth } from "@/api/auth";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { LoginAuthParams, loginAuth } from "@/api/auth";
 import { toast } from "react-toastify";
-import { ApiErrorResponse } from "@/lib/http";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useRouter } from "next/navigation";
 import { LoginFormValidate, LoginFormValidateSchema } from "./login-form.validate";
 
 const LoginForm = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const loginForm = useForm<LoginFormValidate>({
     resolver: zodResolver(LoginFormValidateSchema),
     defaultValues: {
@@ -32,15 +33,15 @@ const LoginForm = () => {
   });
 
   const { mutate: loginMutate, isPending: loginIsPending } = useMutation<
-    UserResponse,
+    ApiSuccessResponse<UserResponse>,
     ApiErrorResponse,
-    LoginAuthBody
+    LoginAuthParams
   >({
     mutationFn: async (params) => await loginAuth(params),
-    onSuccess: () => {
+    onSuccess: (res) => {
       toast.success("Đăng nhập thành công !");
       loginForm.reset();
-      router.replace("/");
+      queryClient.setQueryData(["auth"], res);
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message || "Đăng nhập thất bại !");
@@ -63,7 +64,7 @@ const LoginForm = () => {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="iluvstu" {...field} />
+                <Input placeholder="iluvstu" autoFocus {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

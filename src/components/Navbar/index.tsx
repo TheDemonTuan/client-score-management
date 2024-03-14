@@ -1,6 +1,6 @@
 import React from "react";
-import { CiSearch } from "react-icons/ci";
-import { UserNav } from "./user-nav";
+import { UserNav } from "./user";
+import SearchNav from "./search";
 
 const Navbar = () => {
   return (
@@ -28,12 +28,7 @@ const Navbar = () => {
               <polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49" />
             </svg>
           </label>
-          <label className="input input-bordered flex items-center gap-2">
-            <CiSearch size={24} />
-            <input type="search" className="grow" placeholder="Search" />
-            <kbd className="kbd kbd-sm">ctrl</kbd>
-            <kbd className="kbd kbd-sm">K</kbd>
-          </label>
+          <SearchNav />
         </div>
         <div className="flex items-center pr-4">
           <UserNav />

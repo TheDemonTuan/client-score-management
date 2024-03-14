@@ -1,5 +1,5 @@
 .active {
-  @apply  bg-blue-600/25 rounded-md text-blue-500 font-semibold underline
+  @apply  bg-blue-400/25 rounded-md text-blue-500 font-semibold underline
 }
 
 .active > a {

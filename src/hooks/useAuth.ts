@@ -1,8 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
-import { ApiErrorResponse } from "@/lib/http";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { verifyAuth } from "@/api/auth";
 
 export const useAuth = () => {
+  const queryClient = useQueryClient();
+
   const {
     data: authData,
     error: authError,
@@ -11,12 +13,22 @@ export const useAuth = () => {
     isFetching: authIsFetching,
     isPending: authIsPending,
     isLoading: authIsLoading,
-  } = useQuery<UserResponse, ApiErrorResponse>({
+    refetch: authRefetch,
+  } = useQuery<ApiSuccessResponse<UserResponse>, ApiErrorResponse, UserResponse>({
     queryKey: ["auth"],
     queryFn: async () => await verifyAuth(),
+    select: (res) => res?.data,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 0,
   });
+
+  if (authIsError) {
+    if (queryClient.getQueryData(["auth"])) {
+      queryClient.resetQueries({
+        queryKey: ["auth"],
+      });
+    }
+  }
 
   return {
     authData,
@@ -26,5 +38,6 @@ export const useAuth = () => {
     authIsLoading,
     authIsSuccess,
     authIsError,
+    authRefetch,
   };
 };

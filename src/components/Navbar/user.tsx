@@ -1,5 +1,6 @@
-'use client'
+"use client";
 
+import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -11,8 +12,31 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { LogoutAuthParams, logoutAuth } from "@/api/auth";
+import { toast } from "react-toastify";
 
 export function UserNav() {
+  const { authData, authIsLoading, authRefetch } = useAuth();
+
+  const { mutate: logoutMutate, isPending: logoutIsPending } = useMutation<
+    ApiSuccessResponse,
+    ApiErrorResponse,
+    LogoutAuthParams
+  >({
+    mutationFn: async (params) => await logoutAuth(params),
+    onSuccess: () => {
+      toast.success("Đăng xuất thành công !");
+      authRefetch();
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.message || "Đăng xuất thất bại!");
+    },
+  });
+
+  if (logoutIsPending || authIsLoading) return <Skeleton className="h-11 w-11 rounded-full" />;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -26,8 +50,10 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">shadcn</p>
-            <p className="text-xs leading-none text-muted-foreground">m@example.com</p>
+            <p className="text-sm font-medium leading-none">@{authData?.username}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {authData?.first_name} {authData?.last_name}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -47,7 +73,13 @@ export function UserNav() {
           <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() =>
+            logoutMutate({
+              uid: authData?.id as number,
+            })
+          }
+        >
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>

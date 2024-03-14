@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import Provider from "@/components/provider";
 
-const roboto = Roboto({ weight: ["300", "700"], subsets: ["latin"] });
+const roboto = Roboto({ weight: ["100", "300", "400", "500", "700", "900"], subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "T&Đ Score Manager",
