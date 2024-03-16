@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/v2/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LoginAuthParams, loginAuth } from "@/api/auth";
+import { AuthLoginParams, authLogin } from "@/api/auth";
 import { toast } from "react-toastify";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useRouter } from "next/navigation";
@@ -35,9 +35,9 @@ const LoginForm = () => {
   const { mutate: loginMutate, isPending: loginIsPending } = useMutation<
     ApiSuccessResponse<UserResponse>,
     ApiErrorResponse,
-    LoginAuthParams
+    AuthLoginParams
   >({
-    mutationFn: async (params) => await loginAuth(params),
+    mutationFn: async (params) => await authLogin(params),
     onSuccess: (res) => {
       toast.success("Đăng nhập thành công !");
       loginForm.reset();

@@ -16,13 +16,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterFormValidate, RegisterFormValidateSchema } from "./register-form.validate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { RegisterAuthParams, registerAuth } from "@/api/auth";
+import { AuthRegisterParams, authRegister } from "@/api/auth";
 import { toast } from "react-toastify";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
-import { useRouter } from "next/navigation";
 
 const RegisterForm = () => {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const registerForm = useForm<RegisterFormValidate>({
@@ -38,9 +36,9 @@ const RegisterForm = () => {
   const { mutate: registerMutate, isPending: registerIsPending } = useMutation<
     ApiSuccessResponse<UserResponse>,
     ApiErrorResponse,
-    RegisterAuthParams
+    AuthRegisterParams
   >({
-    mutationFn: async (params) => await registerAuth(params),
+    mutationFn: async (params) => await authRegister(params),
     onSuccess: (res) => {
       toast.success("Đăng ký thành công !");
       registerForm.reset();

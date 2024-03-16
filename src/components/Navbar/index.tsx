@@ -5,7 +5,6 @@ import SearchNav from "./search";
 const Navbar = () => {
   return (
     <>
-      <div className="flex items-center justify-between h-16 shadow-2xl rounded-lg bg-white">
         <div className="flex items-center px-4">
           <label className="lg:hidden swap swap-rotate">
             <input type="checkbox" />
@@ -33,7 +32,6 @@ const Navbar = () => {
         <div className="flex items-center pr-4">
           <UserNav />
         </div>
-      </div>
     </>
   );
 };

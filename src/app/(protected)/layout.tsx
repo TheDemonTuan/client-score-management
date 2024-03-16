@@ -14,11 +14,13 @@ export default function ProtectedLayout({
 }>) {
   return (
     <div className="flex h-auto">
-      <div className="hidden lg:flex flex-col w-72 h-dvh shadow-2xl bg-white sticky top-0">
+      <div className="hidden lg:flex flex-col w-64 h-dvh shadow-sidebar bg-white sticky top-0">
         <Sidebar />
       </div>
       <div className="flex flex-col flex-1 overflow-y-auto p-3">
-        <Navbar />
+        <div className="flex items-center justify-between h-16 shadow-navbar rounded-lg bg-white">
+          <Navbar />
+        </div>
         {children}
       </div>
     </div>

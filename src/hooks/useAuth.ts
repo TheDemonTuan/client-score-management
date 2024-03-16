@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
-import { verifyAuth } from "@/api/auth";
+import { authVerify } from "@/api/auth";
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
@@ -16,7 +16,7 @@ export const useAuth = () => {
     refetch: authRefetch,
   } = useQuery<ApiSuccessResponse<UserResponse>, ApiErrorResponse, UserResponse>({
     queryKey: ["auth"],
-    queryFn: async () => await verifyAuth(),
+    queryFn: async () => await authVerify(),
     select: (res) => res?.data,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 0,

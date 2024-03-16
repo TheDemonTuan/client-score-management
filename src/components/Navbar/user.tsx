@@ -15,7 +15,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogoutAuthParams, logoutAuth } from "@/api/auth";
+import { AuthLogoutParams, authLogout } from "@/api/auth";
 import { toast } from "react-toastify";
 
 export function UserNav() {
@@ -24,9 +24,9 @@ export function UserNav() {
   const { mutate: logoutMutate, isPending: logoutIsPending } = useMutation<
     ApiSuccessResponse,
     ApiErrorResponse,
-    LogoutAuthParams
+    AuthLogoutParams
   >({
-    mutationFn: async (params) => await logoutAuth(params),
+    mutationFn: async (params) => await authLogout(params),
     onSuccess: () => {
       toast.success("Đăng xuất thành công !");
       authRefetch();
