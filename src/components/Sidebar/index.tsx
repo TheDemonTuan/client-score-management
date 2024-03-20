@@ -1,8 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import MenuSide from "./menu";
+import { useSideBarStore } from "@/stores/sidebar-store";
 
 const Sidebar = () => {
+  const { isOpen } = useSideBarStore();
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 h-16 border-b border-gray-300">

@@ -43,6 +43,10 @@ const config = {
         navbar: "rgba(0, 0, 0, 0.16) 0px 10px 36px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px",
         sidebar: "rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px",
       },
+      screens: {
+        md_max: { max: "767px" },
+        lg_max: { max: "1023px" },
+      },
     },
   },
   plugins: [require("tailwindcss-animate"), require("daisyui"), nextui(), addVariablesForColors],

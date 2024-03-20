@@ -20,6 +20,7 @@ const SearchNav = () => {
       startContent={<IoIosSearch size={26} />}
       endContent={<Kbd keys={["command"]}>K</Kbd>}
       placeholder="Search..."
+      className="lg_max:hidden"
     />
   );
 };
