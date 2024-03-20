@@ -49,7 +49,13 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("daisyui"), nextui(), addVariablesForColors],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("tailwindcss-animatecss"),
+    require("daisyui"),
+    nextui(),
+    addVariablesForColors,
+  ],
 } satisfies Config;
 
 function addVariablesForColors({ addBase, theme }: any) {

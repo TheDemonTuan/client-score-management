@@ -12,33 +12,14 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authLogout } from "@/api/auth";
 import { toast } from "react-toastify";
-import { Skeleton } from "@nextui-org/react";
+import { clearJwt } from "@/app/actions";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function UserNav() {
-  const { authData, authCanUse } = useAuth();
+  const { authData } = useAuth();
   const queryClient = useQueryClient();
 
-  const { mutate: logoutMutate, isPending: logoutIsPending } = useMutation<
-    ApiSuccessResponse,
-    ApiErrorResponse
-  >({
-    mutationFn: async () => await authLogout(),
-    onSuccess: () => {
-      toast.success("Đăng xuất thành công !");
-      queryClient.resetQueries({
-        queryKey: ["auth"],
-      });
-    },
-    onError: (error) => {
-      toast.error(error?.response?.data?.message || "Đăng xuất thất bại!");
-    },
-  });
-
-  if (logoutIsPending || !authCanUse) return <Skeleton className="flex h-11 w-11 rounded-full" />;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -75,8 +56,19 @@ export function UserNav() {
           <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => logoutMutate()}>
-          Log out
+        <DropdownMenuItem
+          onClick={async () => {
+            await toast.promise(clearJwt(), {
+              pending: "Đang đăng xuất...",
+              success: "Đăng xuất thành công 👌",
+              error: "Đăng xuất thất bại 🤯",
+            });
+            queryClient.removeQueries({
+              queryKey: ["auth"],
+            });
+          }}
+        >
+          Đăng xuất
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
