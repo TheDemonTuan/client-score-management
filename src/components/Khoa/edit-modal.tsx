@@ -1,4 +1,8 @@
-import { DepartmentCreateParams, DepartmentResponse, departmentCreate } from "@/api/departments";
+import {
+  DepartmentResponse,
+  DepartmentUpdateByIdParams,
+  departmentUpdateById,
+} from "@/api/departments";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useModalStore } from "@/stores/modal-store";
 import {
@@ -15,79 +19,73 @@ import { memo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
-import { AddDepartmentFormValidate, AddDepartmentFormValidateSchema } from "./add.validate";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { MdDriveFileRenameOutline } from "react-icons/md";
 import { cn } from "@/lib/cn";
-import RequestLoadingText from "../request-loading-text";
 
-const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
+import { EditDepartmentFormValidate, EditDepartmentFormValidateSchema } from "./edit.validate";
+
+const EditDepartmentModal = ({ modal_key }: { modal_key: string }) => {
   const queryClient = useQueryClient();
 
-  const { isOpen, onOpenChange } = useModalStore(
+  const { isModalOpen, modalClose, modalData } = useModalStore(
     useShallow((state) => ({
-      isOpen: state.key === modal_key,
-      onOpenChange: state.onOpenChange,
+      isModalOpen: state.modal_key === modal_key,
+      modalClose: state.modalClose,
+      modalData: state.modalData as DepartmentResponse,
     }))
   );
 
-  const addDepartmentForm = useForm<AddDepartmentFormValidate>({
-    resolver: zodResolver(AddDepartmentFormValidateSchema),
-    defaultValues: {
-      name: "",
+  const editDepartmentForm = useForm<EditDepartmentFormValidate>({
+    resolver: zodResolver(EditDepartmentFormValidateSchema),
+    values: {
+      name: modalData?.name || "",
     },
   });
 
-  const { mutateAsync: addMutateAsync, isPending: addIsPending } = useMutation<
+  const { mutateAsync: editMutateAsync, isPending: editIsPending } = useMutation<
     ApiSuccessResponse<DepartmentResponse>,
     ApiErrorResponse,
-    DepartmentCreateParams
+    DepartmentUpdateByIdParams
   >({
-    mutationFn: async (params) => await departmentCreate(params),
+    mutationFn: async (params) => await departmentUpdateById(params),
     onSuccess: (res) => {
-      toast.success("Thêm khoa mới thành công !");
+      toast.success("Cập nhật khoa thành công !");
       queryClient.setQueryData(
         ["departments"],
-        (oldData: ApiSuccessResponse<DepartmentResponse[]> | undefined) => {
-          if (oldData) {
-            return {
-              data: [res.data, ...oldData.data],
-            };
-          }
-        }
+        (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
+          oldData
+            ? {
+                ...oldData,
+                data: oldData.data.map((item) => (item.id === res.data.id ? res.data : item)),
+              }
+            : oldData
       );
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Thêm khoa thất bại!");
+      toast.error(error?.response?.data?.message || "Cập nhật khoa thất bại!");
     },
   });
 
-  const onSubmit = async (data: AddDepartmentFormValidate) => {
-    await addMutateAsync({
-      name: data?.name,
+  const onSubmit = async (data: EditDepartmentFormValidate) => {
+    await editMutateAsync({
+      id: modalData?.id,
+      name: data.name,
     });
-    onOpenChange(false);
-    addDepartmentForm.reset();
+    modalClose();
   };
 
   const handleSubmit = () => {
-    addDepartmentForm.handleSubmit(onSubmit)();
+    editDepartmentForm.handleSubmit(onSubmit)();
   };
 
   return (
     <Modal
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      isOpen={isModalOpen}
+      onOpenChange={modalClose}
       placement="top-center"
-      className={cn(addIsPending && "pointer-events-none")}
+      className={cn(editIsPending && "pointer-events-none")}
       classNames={{
         backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
       }}
@@ -95,28 +93,25 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader className="flex flex-col gap-1">Thêm khoa</ModalHeader>
+            <ModalHeader>Sửa khoa</ModalHeader>
             <ModalBody>
-              <Form {...addDepartmentForm}>
+              <Form {...editDepartmentForm}>
                 <form method="post" className="space-y-3">
                   <FormField
-                    control={addDepartmentForm.control}
+                    control={editDepartmentForm.control}
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tên</FormLabel>
+                        {/* <FormLabel>Tên</FormLabel> */}
                         <FormControl>
                           <Input
                             autoFocus
-                            endContent={
-                              <MdDriveFileRenameOutline
-                                size={28}
-                                className="text-2xl pointer-events-none flex-shrink-0"
-                              />
-                            }
                             label="Tên"
-                            placeholder="Nhập tên khoa"
-                            variant="bordered"
+                            placeholder={modalData?.name || "Tên khoa"}
+                            isInvalid={!!editDepartmentForm.formState.errors.name}
+                            isRequired
+                            variant="faded"
+                            onClear={() => editDepartmentForm.setValue("name", "")}
                             {...field}
                           />
                         </FormControl>
@@ -128,11 +123,11 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
               </Form>
             </ModalBody>
             <ModalFooter>
-              <Button color="danger" variant="flat" onPress={onClose} isDisabled={addIsPending}>
+              <Button color="danger" variant="flat" onPress={onClose} isLoading={editIsPending}>
                 Đóng
               </Button>
-              <Button onClick={handleSubmit} color="secondary" isDisabled={addIsPending}>
-                <RequestLoadingText text="Thêm" isLoading={addIsPending} />
+              <Button onClick={handleSubmit} color="secondary" isLoading={editIsPending}>
+                Cập nhật
               </Button>
             </ModalFooter>
           </>
@@ -142,4 +137,4 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
   );
 };
 
-export default memo(AddDepartmentModal);
+export default memo(EditDepartmentModal) as typeof EditDepartmentModal;

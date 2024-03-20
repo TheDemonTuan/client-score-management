@@ -1,17 +1,14 @@
 "use client";
 
-import React from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/v2/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterFormValidate, RegisterFormValidateSchema } from "./register-form.validate";
@@ -19,6 +16,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AuthRegisterParams, authRegister } from "@/api/auth";
 import { toast } from "react-toastify";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
+import { Button, Input } from "@nextui-org/react";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
 
 const RegisterForm = () => {
   const queryClient = useQueryClient();
@@ -32,6 +31,10 @@ const RegisterForm = () => {
       password: "",
     },
   });
+
+  const [isVisible, setIsVisible] = useState(false);
+
+  const toggleVisibility = () => setIsVisible(!isVisible);
 
   const { mutate: registerMutate, isPending: registerIsPending } = useMutation<
     ApiSuccessResponse<UserResponse>,
@@ -59,16 +62,24 @@ const RegisterForm = () => {
   };
   return (
     <Form {...registerForm}>
-      <form method="post" onSubmit={registerForm.handleSubmit(onSubmit)} className="space-y-3">
+      <form method="post" onSubmit={registerForm.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-flow-col gap-2">
           <FormField
             control={registerForm.control}
             name="first_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Họ</FormLabel>
                 <FormControl>
-                  <Input placeholder="John" {...field} autoFocus />
+                  <Input
+                    isRequired
+                    isInvalid={!!registerForm.formState.errors.first_name}
+                    label="Họ"
+                    variant="faded"
+                    onClear={() => registerForm.resetField("first_name")}
+                    placeholder="John"
+                    {...field}
+                    autoFocus
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -79,9 +90,16 @@ const RegisterForm = () => {
             name="last_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tên</FormLabel>
                 <FormControl>
-                  <Input placeholder="Wich" {...field} />
+                  <Input
+                    isRequired
+                    isInvalid={!!registerForm.formState.errors.last_name}
+                    label="Tên"
+                    variant="faded"
+                    onClear={() => registerForm.resetField("last_name")}
+                    placeholder="Wich"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -93,9 +111,16 @@ const RegisterForm = () => {
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="iluvstu" {...field} />
+                <Input
+                  isRequired
+                  isInvalid={!!registerForm.formState.errors.username}
+                  label="Username"
+                  variant="faded"
+                  onClear={() => registerForm.resetField("username")}
+                  placeholder="iluvstu"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -106,17 +131,38 @@ const RegisterForm = () => {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="1234****" {...field} />
+                <Input
+                  isRequired
+                  isInvalid={!!registerForm.formState.errors.password}
+                  label="Password"
+                  endContent={
+                    <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
+                      {isVisible ? (
+                        <FaEyeSlash className="text-2xl text-default-400 pointer-events-none" />
+                      ) : (
+                        <FaEye className="text-2xl text-default-400 pointer-events-none" />
+                      )}
+                    </button>
+                  }
+                  type={isVisible ? "text" : "password"}
+                  variant="faded"
+                  placeholder="1234****"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={registerIsPending}>
+        <Button
+          color="secondary"
+          type="submit"
+          className="w-full"
+          variant="shadow"
+          isLoading={registerIsPending}
+        >
           Đăng ký
-          {registerIsPending && <span className="loading loading-spinner loading-xs ml-1" />}
         </Button>
       </form>
     </Form>

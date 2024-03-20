@@ -1,28 +1,25 @@
 "use client";
 
-import React from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/v2/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AuthLoginParams, authLogin } from "@/api/auth";
 import { toast } from "react-toastify";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
-import { useRouter } from "next/navigation";
 import { LoginFormValidate, LoginFormValidateSchema } from "./login-form.validate";
+import { Button, Input } from "@nextui-org/react";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
 
 const LoginForm = () => {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const loginForm = useForm<LoginFormValidate>({
     resolver: zodResolver(LoginFormValidateSchema),
@@ -31,6 +28,10 @@ const LoginForm = () => {
       password: "",
     },
   });
+
+  const [isVisible, setIsVisible] = useState(false);
+
+  const toggleVisibility = () => setIsVisible(!isVisible);
 
   const { mutate: loginMutate, isPending: loginIsPending } = useMutation<
     ApiSuccessResponse<UserResponse>,
@@ -54,17 +55,25 @@ const LoginForm = () => {
       password: data?.password,
     });
   };
+
   return (
     <Form {...loginForm}>
-      <form method="post" onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-3">
-        <FormField
+      <form method="post" onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-4">
+      <FormField
           control={loginForm.control}
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="iluvstu" autoFocus {...field} />
+                <Input
+                  isRequired
+                  isInvalid={!!loginForm.formState.errors.username}
+                  label="Username"
+                  variant="faded"
+                  onClear={() => loginForm.resetField("username")}
+                  placeholder="iluvstu"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -75,17 +84,32 @@ const LoginForm = () => {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="1234****" {...field} />
+                <Input
+                  isRequired
+                  isInvalid={!!loginForm.formState.errors.password}
+                  label="Password"
+                  endContent={
+                    <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
+                      {isVisible ? (
+                        <FaEyeSlash className="text-2xl text-default-400 pointer-events-none" />
+                      ) : (
+                        <FaEye className="text-2xl text-default-400 pointer-events-none" />
+                      )}
+                    </button>
+                  }
+                  type={isVisible ? "text" : "password"}
+                  variant="faded"
+                  placeholder="1234****"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={loginIsPending}>
+        <Button color="secondary" type="submit" className="w-full" variant="shadow" isLoading={loginIsPending}>
           Đăng nhập
-          {loginIsPending && <span className="loading loading-spinner loading-xs ml-1" />}
         </Button>
       </form>
     </Form>

@@ -22,14 +22,6 @@ export const useAuth = () => {
     retry: 0,
   });
 
-  if (authIsError) {
-    if (queryClient.getQueryData(["auth"])) {
-      queryClient.resetQueries({
-        queryKey: ["auth"],
-      });
-    }
-  }
-
   return {
     authData,
     authError,
@@ -39,5 +31,6 @@ export const useAuth = () => {
     authIsSuccess,
     authIsError,
     authRefetch,
+    authCanUse: !authIsLoading && authIsSuccess && authData,
   };
 };

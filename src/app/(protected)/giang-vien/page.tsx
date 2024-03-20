@@ -28,42 +28,47 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { IoSearchOutline } from "react-icons/io5";
 import { useQuery } from "@tanstack/react-query";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
-import { DepartmentResponse, departmentGetList } from "@/api/departments";
 import { AiOutlineFundView } from "react-icons/ai";
 import { MdOutlineDelete } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
 import PreviewRelatedModal, {
   PreviewRelatedClassColumns,
-  PreviewRelatedInstructorColumns,
-  PreviewRelatedStudentColumns,
-  PreviewRelatedSubjectColumns,
 } from "@/components/preview-related-modal";
 import { useModalStore } from "@/stores/modal-store";
-import AddDepartmentModal from "@/components/Khoa/add-modal";
-import EditDepartmentModal from "@/components/Khoa/edit-modal";
-import DeleteDepartmentModal from "@/components/Khoa/delete-modal";
+import { InstructorReponse, instructorGetList } from "@/api/instructors";
+import { DepartmentResponse, departmentGetList } from "@/api/departments";
+import AddInstructorModal from "@/components/Giang-Vien/add-modal";
+import EditInstructorModal from "@/components/Giang-Vien/edit-modal";
+import DeleteInstructorModal from "@/components/Giang-Vien/delete-modal";
 
 const columns = [
-  { name: "Mã khoa", uid: "id", sortable: true },
-  { name: "Tên khoa", uid: "name", sortable: true },
-  { name: "Số lượng sinh viên", uid: "students", sortable: true },
-  { name: "Số lượng giảng viên", uid: "instructors", sortable: true },
-  { name: "Số lượng lớp học", uid: "classes", sortable: true },
-  { name: "Số lượng môn học", uid: "subjects", sortable: true },
+  { name: "Mã giảng viên", uid: "id", sortable: true },
+  { name: "Họ giảng viên", uid: "first_name", sortable: true },
+  { name: "Tên giảng viên", uid: "last_name", sortable: true },
+  { name: "Họ tên giảng viên", uid: "full_name", sortable: true },
+  { name: "Email", uid: "email", sortable: true },
+  { name: "Địa chỉ", uid: "address", sortable: true },
+  { name: "Ngày sinh", uid: "birth_day", sortable: true },
+  { name: "Số điện thoại", uid: "phone", sortable: true },
+  { name: "Giới tính", uid: "gender", sortable: true },
+  { name: "Trình độ", uid: "degree", sortable: true },
+  { name: "Khoa", uid: "department_id", sortable: true },
+  { name: "Số lượng lớp quản lý", uid: "classes", sortable: true },
   { name: "Hành động", uid: "actions" },
 ];
 
 const INITIAL_VISIBLE_COLUMNS = [
   "id",
-  "name",
+  "full_name",
+  "email",
+  "phone",
+  "gender",
+  "department_id",
   "classes",
-  "students",
-  "instructors",
-  "subjects",
   "actions",
 ];
 
-export default function KhoaPage() {
+export default function GiangVienPage() {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
@@ -91,21 +96,34 @@ export default function KhoaPage() {
     select: (res) => res?.data,
   });
 
+  const { data: instructorsData, isPending: instructorsIsPending } = useQuery<
+    ApiSuccessResponse<InstructorReponse[]>,
+    ApiErrorResponse,
+    InstructorReponse[]
+  >({
+    queryKey: ["instructors"],
+    queryFn: async () => await instructorGetList(),
+    select: (res) => res?.data,
+    enabled: !departmentsIsPending,
+  });
+
   const { modalOpen, changeModalData } = useModalStore();
 
   //End My Logic
 
   const filteredItems = useMemo(() => {
-    let filteredDepartments = [...(departmentsData ?? [])];
+    let filteredInstructors = [...(instructorsData ?? [])];
 
     if (hasSearchFilter) {
-      filteredDepartments = filteredDepartments.filter((department) =>
-        department.name.toLowerCase().includes(filterValue.toLowerCase())
+      filteredInstructors = filteredInstructors.filter(
+        (instructor) =>
+          instructor.first_name.toLowerCase().includes(filterValue.toLowerCase()) ||
+          instructor.last_name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
 
-    return filteredDepartments;
-  }, [departmentsData, filterValue, hasSearchFilter]);
+    return filteredInstructors;
+  }, [instructorsData, hasSearchFilter, filterValue]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -117,9 +135,9 @@ export default function KhoaPage() {
   }, [page, filteredItems, rowsPerPage]);
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a: DepartmentResponse, b: DepartmentResponse) => {
-      const first = a[sortDescriptor.column as keyof DepartmentResponse] as number;
-      const second = b[sortDescriptor.column as keyof DepartmentResponse] as number;
+    return [...items].sort((a: InstructorReponse, b: InstructorReponse) => {
+      const first = a[sortDescriptor.column as keyof InstructorReponse] as string;
+      const second = b[sortDescriptor.column as keyof InstructorReponse] as string;
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
@@ -127,76 +145,33 @@ export default function KhoaPage() {
   }, [sortDescriptor, items]);
 
   const renderCell = useCallback(
-    (department: DepartmentResponse, columnKey: Key) => {
-      const cellValue = department[columnKey as keyof DepartmentResponse];
+    (instructor: InstructorReponse, columnKey: Key) => {
+      const cellValue = instructor[columnKey as keyof InstructorReponse];
 
       switch (columnKey) {
+        case "full_name":
+          return `${instructor.first_name} ${instructor.last_name}`;
+        case "gender":
+          return `${!instructor.gender ? "Nam" : "Nữ"}`;
+        case "department_id":
+          return `
+              ${
+                departmentsData?.find((department) => department.id === instructor.department_id)
+                  ?.name
+              }`;
         case "classes":
           return (
             <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{department?.classes?.length ?? 0}</p>
+              <p className="font-medium text-base">{instructor?.classes?.length ?? 0}</p>
               <AiOutlineFundView
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
-                  modalOpen("preview_related");
                   changeModalData({
-                    data: department?.classes ?? [],
+                    data: instructor?.classes ?? [],
                     columns: PreviewRelatedClassColumns,
                   });
-                }}
-              />
-            </div>
-          );
-        case "instructors":
-          return (
-            <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{department?.instructors?.length ?? 0}</p>
-              <AiOutlineFundView
-                className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
-                size={24}
-                onClick={() => {
-                  {
-                    modalOpen("preview_related");
-                    changeModalData({
-                      data: department?.instructors ?? [],
-                      columns: PreviewRelatedInstructorColumns,
-                    });
-                  }
-                }}
-              />
-            </div>
-          );
-        case "students":
-          return (
-            <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{department?.students?.length ?? 0}</p>
-              <AiOutlineFundView
-                className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
-                size={24}
-                onClick={() => {
                   modalOpen("preview_related");
-                  changeModalData({
-                    data: department?.students ?? [],
-                    columns: PreviewRelatedStudentColumns,
-                  });
-                }}
-              />
-            </div>
-          );
-        case "subjects":
-          return (
-            <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{department?.subjects?.length ?? 0}</p>
-              <AiOutlineFundView
-                className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
-                size={24}
-                onClick={() => {
-                  modalOpen("preview_related");
-                  changeModalData({
-                    data: department?.subjects ?? [],
-                    columns: PreviewRelatedSubjectColumns,
-                  });
                 }}
               />
             </div>
@@ -206,15 +181,15 @@ export default function KhoaPage() {
             <div className="relative flex items-center gap-2">
               <FaRegEdit
                 onClick={() => {
-                  changeModalData(department);
-                  modalOpen("edit_department");
+                  changeModalData(instructor);
+                  modalOpen("edit_instructor");
                 }}
                 className="text-lg text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400"
               />
               <MdOutlineDelete
                 onClick={() => {
-                  changeModalData(department);
-                  modalOpen("delete_department");
+                  changeModalData(instructor);
+                  modalOpen("delete_instructor");
                 }}
                 className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-gray-400"
               />
@@ -224,7 +199,7 @@ export default function KhoaPage() {
           return cellValue;
       }
     },
-    [changeModalData, modalOpen]
+    [changeModalData, departmentsData, modalOpen]
   );
 
   const onRowsPerPageChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
@@ -252,8 +227,9 @@ export default function KhoaPage() {
         <div className="flex justify-between gap-3 items-end">
           <Input
             isClearable
+            isDisabled={instructorsIsPending}
             className="w-full sm:max-w-[44%]"
-            placeholder="Tìm kiếm theo tên khoa..."
+            placeholder="Tìm kiếm theo họ hoặc tên giảng viên..."
             startContent={<IoSearchOutline />}
             value={filterValue}
             onClear={() => onClear()}
@@ -282,18 +258,18 @@ export default function KhoaPage() {
               </DropdownMenu>
             </Dropdown>
             <Button
-              onPress={() => modalOpen("add_department")}
+              onPress={() => modalOpen("add_instructor")}
               color="secondary"
               endContent={<FaPlus />}
-              isLoading={departmentsIsPending}
+              isLoading={instructorsIsPending}
             >
-              Thêm khoa mới
+              Thêm giảng viên mới
             </Button>
           </div>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Có <span className="font-bold text-black">{departmentsData?.length}</span> khoa
+            Có <span className="font-bold text-black">{instructorsData?.length}</span> giảng viên
           </span>
           <Select
             label="Số dòng:"
@@ -323,8 +299,8 @@ export default function KhoaPage() {
     filterValue,
     onSearchChange,
     visibleColumns,
-    departmentsIsPending,
-    departmentsData?.length,
+    instructorsIsPending,
+    instructorsData?.length,
     rowsPerPage,
     onRowsPerPageChange,
     onClear,
@@ -348,21 +324,21 @@ export default function KhoaPage() {
         {selectedKeys === "all" && (
           <Button startContent={<MdOutlineDelete size={24} />} color="danger" variant="flat">
             <span>
-              <span className="font-bold">tất cả</span> các khoa
+              <span className="font-bold">tất cả</span> các giảng viên
             </span>
           </Button>
         )}
         {selectedKeys !== "all" && selectedKeys.size > 0 && (
           <Button startContent={<MdOutlineDelete size={24} />} color="danger" variant="flat">
             <span>
-              <span className="font-bold">{selectedKeys.size}</span> khoa đã chọn
+              <span className="font-bold">{selectedKeys.size}</span> giảng viên đã chọn
             </span>
           </Button>
         )}
         <span className="text-small text-default-400">
           {selectedKeys === "all"
-            ? "Đã chọn tất cả các khoa"
-            : `${selectedKeys.size} trên ${filteredItems.length} khoa đã chọn`}
+            ? "Đã chọn tất cả các giảng viên"
+            : `${selectedKeys.size} trên ${filteredItems.length} giảng viên đã chọn`}
         </span>
       </div>
     );
@@ -404,14 +380,14 @@ export default function KhoaPage() {
               )}
             </TableHeader>
             <TableBody
-              emptyContent={"Không tìm thấy khoa nào"}
+              emptyContent={"Không tìm thấy giảng viên nào"}
               loadingContent={<Spinner label="Loading..." color="secondary" size="md" />}
-              loadingState={departmentsIsPending ? "loading" : "idle"}
+              loadingState={instructorsIsPending ? "loading" : "idle"}
               items={sortedItems}
             >
               {(item) => (
                 <TableRow key={item.id}>
-                  {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                  {(columnKey) => <TableCell>{renderCell(item, columnKey) as any}</TableCell>}
                 </TableRow>
               )}
             </TableBody>
@@ -419,9 +395,9 @@ export default function KhoaPage() {
         </CardContent>
       </Card>
       <PreviewRelatedModal modal_key="preview_related" />
-      <AddDepartmentModal modal_key="add_department" />
-      <EditDepartmentModal modal_key="edit_department" />
-      <DeleteDepartmentModal modal_key="delete_department" />
+      <AddInstructorModal modal_key="add_instructor" />
+      <EditInstructorModal modal_key="edit_instructor" />
+      <DeleteInstructorModal modal_key="delete_instructor" />
     </>
   );
 }

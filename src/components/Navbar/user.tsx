@@ -12,38 +12,40 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AuthLogoutParams, authLogout } from "@/api/auth";
+import { authLogout } from "@/api/auth";
 import { toast } from "react-toastify";
+import { Skeleton } from "@nextui-org/react";
 
 export function UserNav() {
-  const { authData, authIsLoading, authRefetch } = useAuth();
+  const { authData, authCanUse } = useAuth();
+  const queryClient = useQueryClient();
 
   const { mutate: logoutMutate, isPending: logoutIsPending } = useMutation<
     ApiSuccessResponse,
-    ApiErrorResponse,
-    AuthLogoutParams
+    ApiErrorResponse
   >({
-    mutationFn: async (params) => await authLogout(params),
+    mutationFn: async () => await authLogout(),
     onSuccess: () => {
       toast.success("Đăng xuất thành công !");
-      authRefetch();
+      queryClient.resetQueries({
+        queryKey: ["auth"],
+      });
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message || "Đăng xuất thất bại!");
     },
   });
 
-  if (logoutIsPending || authIsLoading) return <Skeleton className="h-11 w-11 rounded-full" />;
+  if (logoutIsPending || !authCanUse) return <Skeleton className="flex h-11 w-11 rounded-full" />;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div className="avatar online cursor-pointer rounded-full ring">
           <Avatar className="h-10 w-10">
             <AvatarImage src="/guest-avatar.png" alt="User Avatar" />
-            <AvatarFallback>User Avatar</AvatarFallback>
+            <AvatarFallback>avatar</AvatarFallback>
           </Avatar>
         </div>
       </DropdownMenuTrigger>
@@ -73,13 +75,7 @@ export function UserNav() {
           <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() =>
-            logoutMutate({
-              uid: authData?.id as number,
-            })
-          }
-        >
+        <DropdownMenuItem onClick={() => logoutMutate()}>
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>

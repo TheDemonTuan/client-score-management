@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 
-export interface ApiSuccessResponse<T = null> {
+export interface ApiSuccessResponse<T = null | []> {
 	code: number;
 	message: string;
 	data: T;

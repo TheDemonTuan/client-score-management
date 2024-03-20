@@ -5,7 +5,7 @@ import RegisterForm from "@/components/Auth/Register/register-form";
 
 const DangKyPage = () => {
   return (
-    <>
+    <div className="w-full">
       <RegisterForm />
       <div className="flex items-center gap-1 text-sm justify-center mt-2">
         <Label>Đã có tài khoản ư?</Label>
@@ -13,7 +13,7 @@ const DangKyPage = () => {
           đăng nhập ngay
         </Link>
       </div>
-    </>
+    </div>
   );
 };
 

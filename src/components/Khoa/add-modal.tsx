@@ -17,25 +17,16 @@ import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
 import { AddDepartmentFormValidate, AddDepartmentFormValidateSchema } from "./add.validate";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { MdDriveFileRenameOutline } from "react-icons/md";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/cn";
-import RequestLoadingText from "../request-loading-text";
 
 const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
   const queryClient = useQueryClient();
 
-  const { isOpen, onOpenChange } = useModalStore(
+  const { isModalOpen, modalClose } = useModalStore(
     useShallow((state) => ({
-      isOpen: state.key === modal_key,
-      onOpenChange: state.onOpenChange,
+      isModalOpen: state.modal_key === modal_key,
+      modalClose: state.modalClose,
     }))
   );
 
@@ -56,13 +47,13 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
       toast.success("Thêm khoa mới thành công !");
       queryClient.setQueryData(
         ["departments"],
-        (oldData: ApiSuccessResponse<DepartmentResponse[]> | undefined) => {
-          if (oldData) {
-            return {
-              data: [res.data, ...oldData.data],
-            };
-          }
-        }
+        (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
+          oldData
+            ? {
+                ...oldData,
+                data: [res.data, ...oldData.data],
+              }
+            : oldData
       );
     },
     onError: (error) => {
@@ -74,7 +65,7 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     await addMutateAsync({
       name: data?.name,
     });
-    onOpenChange(false);
+    modalClose();
     addDepartmentForm.reset();
   };
 
@@ -84,10 +75,11 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
 
   return (
     <Modal
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      isOpen={isModalOpen}
+      onOpenChange={modalClose}
       placement="top-center"
       className={cn(addIsPending && "pointer-events-none")}
+      closeButton={false}
       classNames={{
         backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
       }}
@@ -95,7 +87,7 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader className="flex flex-col gap-1">Thêm khoa</ModalHeader>
+            <ModalHeader>Thêm khoa</ModalHeader>
             <ModalBody>
               <Form {...addDepartmentForm}>
                 <form method="post" className="space-y-3">
@@ -104,19 +96,15 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tên</FormLabel>
                         <FormControl>
                           <Input
                             autoFocus
-                            endContent={
-                              <MdDriveFileRenameOutline
-                                size={28}
-                                className="text-2xl pointer-events-none flex-shrink-0"
-                              />
-                            }
                             label="Tên"
                             placeholder="Nhập tên khoa"
-                            variant="bordered"
+                            isInvalid={!!addDepartmentForm.formState.errors.name}
+                            isRequired
+                            variant="faded"
+                            onClear={() => addDepartmentForm.resetField("name")}
                             {...field}
                           />
                         </FormControl>
@@ -128,11 +116,11 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
               </Form>
             </ModalBody>
             <ModalFooter>
-              <Button color="danger" variant="flat" onPress={onClose} isDisabled={addIsPending}>
+              <Button color="danger" variant="flat" onPress={onClose} isLoading={addIsPending}>
                 Đóng
               </Button>
-              <Button onClick={handleSubmit} color="secondary" isDisabled={addIsPending}>
-                <RequestLoadingText text="Thêm" isLoading={addIsPending} />
+              <Button onClick={handleSubmit} color="secondary" isLoading={addIsPending}>
+                Thêm
               </Button>
             </ModalFooter>
           </>

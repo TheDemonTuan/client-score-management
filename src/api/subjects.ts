@@ -1,4 +1,6 @@
-interface SubjectResponse {
+import http, { ApiSuccessResponse } from "@/lib/http";
+
+export interface SubjectResponse {
   id: string;
   name: string;
   credits: number;
@@ -6,8 +8,11 @@ interface SubjectResponse {
   midterm_percentage: number;
   final_percentage: number;
   department_id: number;
-  created_at: Date;
-  updated_at: Date;
   grades: any[];
   assignments: any[];
 }
+
+
+//----------------------------------------------GET LIST----------------------------------------------
+export const subjectGetList = async () =>
+  http.get<ApiSuccessResponse<SubjectResponse[]>>("subjects").then((res) => res.data);

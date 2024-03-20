@@ -29,9 +29,5 @@ export const authVerify = async () =>
 
 // ----------------------------------------------LOGOUT----------------------------------------------
 
-export interface AuthLogoutParams {
-  uid: number;
-}
-
-export const authLogout = async (params: AuthLogoutParams) =>
-  http.delete(`auth/logout/${params?.uid}`).then((res) => res.data);
+export const authLogout = async () =>
+  http.delete(`auth/logout`).then((res) => res.data);

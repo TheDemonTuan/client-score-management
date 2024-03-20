@@ -5,7 +5,7 @@ export const EditDepartmentFormValidateSchema = z.object({
     .string({
       required_error: "Vui lòng nhập tên.",
     })
-    .min(2, {
+    .min(3, {
       message: "Tên không được ít hơn 3 ký tự.",
     })
     .max(100, {

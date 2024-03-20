@@ -5,7 +5,7 @@ import LoginForm from "@/components/Auth/Login/login-form";
 
 const DangNhapPage = () => {
   return (
-    <>
+    <div className="w-full">
       <LoginForm />
       <div className="flex items-center gap-1 text-sm justify-center mt-2">
         <Label>Chưa có tài khoản?</Label>
@@ -13,7 +13,7 @@ const DangNhapPage = () => {
           đăng ký ngay
         </Link>
       </div>
-    </>
+    </div>
   );
 };
 
