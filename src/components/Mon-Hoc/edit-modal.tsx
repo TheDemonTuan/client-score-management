@@ -49,7 +49,6 @@ const EditDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     mutationFn: async (params) => await departmentUpdateById(params),
     onSuccess: (res) => {
       toast.success("Cập nhật khoa thành công !");
-      modalClose();
       queryClient.setQueryData(
         ["departments"],
         (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
@@ -63,6 +62,9 @@ const EditDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message || "Cập nhật khoa thất bại!");
+    },
+    onSettled: () => {
+      modalClose();
     },
   });
 

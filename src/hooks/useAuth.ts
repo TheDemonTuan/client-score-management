@@ -1,10 +1,8 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { authVerify } from "@/api/auth";
 
 export const useAuth = () => {
-  const queryClient = useQueryClient();
-
   const {
     data: authData,
     error: authError,
@@ -31,6 +29,6 @@ export const useAuth = () => {
     authIsSuccess,
     authIsError,
     authRefetch,
-    authCanUse: !authIsLoading && authIsSuccess && authData,
+    authCanUse: !authIsFetching && authIsSuccess && authData,
   };
 };

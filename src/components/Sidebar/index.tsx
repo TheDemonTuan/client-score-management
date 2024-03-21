@@ -14,7 +14,7 @@ const Sidebar = () => {
   return (
     <div
       className={cn(
-        "flex flex-col w-56 lg:w-64 h-dvh shadow-sidebar bg-white sticky top-0 space-y-2 transition-all z-50",
+        "flex flex-col w-5/6 sm:w-64 h-dvh shadow-sidebar bg-white sticky top-0 space-y-2 transition-all z-50",
         isOpen && styles.sidebarOpen,
         !isOpen && "lg_max:animate-appearance-out lg_max:hidden"
       )}

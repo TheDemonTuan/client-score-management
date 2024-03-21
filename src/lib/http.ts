@@ -1,4 +1,5 @@
-import { getJwt } from "@/app/actions";
+import { clearJwt, getJwt, setJwt } from "@/app/actions";
+import { useAuth } from "@/hooks/useAuth";
 import axios, { AxiosError } from "axios";
 
 export interface ApiSuccessResponse<T = null | []> {
@@ -16,7 +17,6 @@ interface ErrorResponse {
 const http = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_URI}/api/`,
   timeout: 10000,
-  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,10 +24,30 @@ const http = axios.create({
 
 http.interceptors.request.use(
   async (config) => {
-    config.headers["Authorization"] = `Bearer ${await getJwt()}`;
+    const jwt = await getJwt();
+    if (jwt) {
+      config.headers["Authorization"] = `Bearer ${jwt}`;
+    }
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+http.interceptors.response.use(
+  async (response) => {
+    const authToken = response.headers["tdt-auth-token"];
+
+    if (authToken) {
+      await setJwt(authToken);
+    }
+    return response;
+  },
+  async (error: ApiErrorResponse) => {
+    if (error.response?.status === 401) {
+      await clearJwt();
+    }
     return Promise.reject(error);
   }
 );

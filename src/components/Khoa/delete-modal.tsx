@@ -17,7 +17,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { memo } from "react";
 import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
-import { cn } from "@/lib/cn";
 
 const DeleteDepartmentModal = ({ modal_key }: { modal_key: string }) => {
   const queryClient = useQueryClient();
@@ -30,7 +29,7 @@ const DeleteDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     }))
   );
 
-  const { mutateAsync: deleteMutateAsync, isPending: deleteIsPending } = useMutation<
+  const { mutate: deleteMutate, isPending: deleteIsPending } = useMutation<
     ApiSuccessResponse,
     ApiErrorResponse,
     DepartmentDeleteByIdParams
@@ -38,6 +37,7 @@ const DeleteDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     mutationFn: async (params) => await departmentDeleteById(params),
     onSuccess: () => {
       toast.success(`Xoá khoa thành công !`);
+      modalClose();
       queryClient.setQueryData(
         ["departments"],
         (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
@@ -51,17 +51,16 @@ const DeleteDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     },
   });
 
-  const handleSubmit = async () => {
-    await deleteMutateAsync({ id: modalData?.id });
-    modalClose();
+  const handleSubmit = () => {
+    deleteMutate({ id: modalData?.id });
   };
 
   return (
     <Modal
       isOpen={isModalOpen}
       onOpenChange={modalClose}
-      placement="top-center"
-      className={cn(deleteIsPending && "pointer-events-none")}
+      placement="center"
+      scrollBehavior="inside"
       classNames={{
         backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
       }}

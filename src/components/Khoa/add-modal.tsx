@@ -18,7 +18,6 @@ import { useShallow } from "zustand/react/shallow";
 import { AddDepartmentFormValidate, AddDepartmentFormValidateSchema } from "./add.validate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { cn } from "@/lib/cn";
 
 const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
   const queryClient = useQueryClient();
@@ -32,12 +31,9 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
 
   const addDepartmentForm = useForm<AddDepartmentFormValidate>({
     resolver: zodResolver(AddDepartmentFormValidateSchema),
-    defaultValues: {
-      name: "",
-    },
   });
 
-  const { mutateAsync: addMutateAsync, isPending: addIsPending } = useMutation<
+  const { mutate: addMutate, isPending: addIsPending } = useMutation<
     ApiSuccessResponse<DepartmentResponse>,
     ApiErrorResponse,
     DepartmentCreateParams
@@ -45,6 +41,8 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     mutationFn: async (params) => await departmentCreate(params),
     onSuccess: (res) => {
       toast.success("Thêm khoa mới thành công !");
+      addDepartmentForm.reset();
+      modalClose();
       queryClient.setQueryData(
         ["departments"],
         (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
@@ -61,12 +59,10 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     },
   });
 
-  const onSubmit = async (data: AddDepartmentFormValidate) => {
-    await addMutateAsync({
+  const onSubmit = (data: AddDepartmentFormValidate) => {
+    addMutate({
       name: data?.name,
     });
-    modalClose();
-    addDepartmentForm.reset();
   };
 
   const handleSubmit = () => {
@@ -77,9 +73,8 @@ const AddDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     <Modal
       isOpen={isModalOpen}
       onOpenChange={modalClose}
-      placement="top-center"
-      className={cn(addIsPending && "pointer-events-none")}
-      closeButton={false}
+      scrollBehavior="inside"
+      placement="center"
       classNames={{
         backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
       }}

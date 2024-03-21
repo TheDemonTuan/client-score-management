@@ -15,11 +15,13 @@ import {
 import { toast } from "react-toastify";
 import { clearJwt } from "@/app/actions";
 import { useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@nextui-org/react";
 
 export function UserNav() {
-  const { authData } = useAuth();
+  const { authData,authCanUse } = useAuth();
   const queryClient = useQueryClient();
 
+  if (!authCanUse) return <Skeleton className="h-11 w-11 rounded-full" />;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

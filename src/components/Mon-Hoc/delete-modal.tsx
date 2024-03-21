@@ -1,3 +1,8 @@
+import {
+  DepartmentDeleteByIdParams,
+  DepartmentResponse,
+  departmentDeleteById,
+} from "@/api/departments";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useModalStore } from "@/stores/modal-store";
 import {
@@ -12,66 +17,39 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { memo } from "react";
 import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
-import { cn } from "@/lib/cn";
-import {
-  InstructorDeleteByIdParams,
-  InstructorReponse,
-  instructorDeleteById,
-} from "@/api/instructors";
-import { DepartmentResponse } from "@/api/departments";
 
-const DeleteInstructorModal = ({ modal_key }: { modal_key: string }) => {
+const DeleteDepartmentModal = ({ modal_key }: { modal_key: string }) => {
   const queryClient = useQueryClient();
 
   const { isModalOpen, modalClose, modalData } = useModalStore(
     useShallow((state) => ({
       isModalOpen: state.modal_key === modal_key,
       modalClose: state.modalClose,
-      modalData: state.modalData as InstructorReponse,
+      modalData: state.modalData as DepartmentResponse,
     }))
   );
 
   const { mutate: deleteMutate, isPending: deleteIsPending } = useMutation<
     ApiSuccessResponse,
     ApiErrorResponse,
-    InstructorDeleteByIdParams
+    DepartmentDeleteByIdParams
   >({
-    mutationFn: async (params) => await instructorDeleteById(params),
+    mutationFn: async (params) => await departmentDeleteById(params),
     onSuccess: () => {
-      toast.success(`Xoá giảng viên thành công !`);
-      modalClose();
-      queryClient.setQueryData(
-        ["instructors"],
-        (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
-          oldData
-            ? {
-                ...oldData,
-                data: oldData.data.filter((instructor) => instructor.id !== modalData?.id),
-              }
-            : oldData
-      );
+      toast.success(`Xoá khoa thành công !`);
       queryClient.setQueryData(
         ["departments"],
         (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
           oldData
-            ? {
-                ...oldData,
-                data: oldData.data.map((department) =>
-                  department.id === modalData?.department_id
-                    ? {
-                        ...department,
-                        instructors: department.instructors.filter(
-                          (instructor) => instructor.id !== modalData?.id
-                        ),
-                      }
-                    : department
-                ),
-              }
+            ? { ...oldData, data: oldData.data.filter((item) => item.id !== modalData?.id) }
             : oldData
       );
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Xoá giảng viên thất bại!");
+      toast.error(error?.response?.data?.message || "Xoá khoa thất bại!");
+    },
+    onSettled: () => {
+      modalClose();
     },
   });
 
@@ -84,7 +62,7 @@ const DeleteInstructorModal = ({ modal_key }: { modal_key: string }) => {
       isOpen={isModalOpen}
       onOpenChange={modalClose}
       placement="center"
-      className={cn(deleteIsPending && "pointer-events-none")}
+      scrollBehavior="inside"
       classNames={{
         backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
       }}
@@ -92,9 +70,11 @@ const DeleteInstructorModal = ({ modal_key }: { modal_key: string }) => {
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader className="flex flex-col gap-1">Xoá giảng viên</ModalHeader>
+            <ModalHeader>Xoá khoa</ModalHeader>
             <ModalBody>
-              <p>Bạn có đồng ý xoá giảng viên này?</p>
+              <p>
+                Bạn có đồng ý xoá khoa <span className="font-bold">{modalData?.name}</span> ?
+              </p>
             </ModalBody>
             <ModalFooter>
               <Button color="danger" variant="flat" onPress={onClose} isLoading={deleteIsPending}>
@@ -111,4 +91,4 @@ const DeleteInstructorModal = ({ modal_key }: { modal_key: string }) => {
   );
 };
 
-export default memo(DeleteInstructorModal) as typeof DeleteInstructorModal;
+export default memo(DeleteDepartmentModal) as typeof DeleteDepartmentModal;

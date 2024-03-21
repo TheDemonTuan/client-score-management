@@ -16,7 +16,7 @@ export interface InstructorReponse {
 }
 
 //----------------------------------------------GET LIST----------------------------------------------
-export const instructorGetList = async () =>
+export const instructorGetAll = async () =>
   http.get<ApiSuccessResponse<InstructorReponse[]>>("instructors").then((res) => res.data);
 
 //----------------------------------------------CREATE----------------------------------------------

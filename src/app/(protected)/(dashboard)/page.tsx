@@ -1,35 +1,35 @@
 "use client";
 
-import { departmentGetList } from "@/api/departments";
-import { instructorGetList } from "@/api/instructors";
-import { subjectGetList } from "@/api/subjects";
+import { departmentGetAll } from "@/api/departments";
+import { instructorGetAll } from "@/api/instructors";
+import { subjectGetAll } from "@/api/subjects";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSuspenseQueries } from "@tanstack/react-query";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { PiStudent } from "react-icons/pi";
 import { SiBookstack } from "react-icons/si";
 
-export default function HomePage() {
+export default function DashboardPage() {
   const [departmentsQuery, instructorsQuery, subjectsQuery] = useSuspenseQueries({
     queries: [
       {
         queryKey: ["departments"],
-        queryFn: async () => await departmentGetList(),
+        queryFn: async () => await departmentGetAll(),
       },
       {
         queryKey: ["instructors"],
-        queryFn: async () => await instructorGetList(),
+        queryFn: async () => await instructorGetAll(),
       },
       {
         queryKey: ["subjects"],
-        queryFn: async () => await subjectGetList(),
+        queryFn: async () => await subjectGetAll(),
       },
     ],
   });
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 h-[1000px]">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Số lượng giảng viên</CardTitle>

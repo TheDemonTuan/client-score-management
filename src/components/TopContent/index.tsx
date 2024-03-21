@@ -7,8 +7,8 @@ import { usePathNameStore } from "@/stores/pathname-store";
 const TopContent = () => {
   const { split, title } = usePathNameStore();
   return (
-    <div className="md:flex items-center justify-between space-y-2">
-      <h2 className="text-4xl font-bold tracking-tight capitalize text-blue-500">{title}</h2>
+    <div className="flex flex-col sm:flex-row items-center justify-between space-y-2">
+      <h2 className="text-4xl font-extrabold tracking-tight capitalize text-blue-500">{title}</h2>
       <div className="flex items-center space-x-2">
         <Breadcrumbs variant="bordered" underline="hover">
           <BreadcrumbItem href="/">Dashboard</BreadcrumbItem>

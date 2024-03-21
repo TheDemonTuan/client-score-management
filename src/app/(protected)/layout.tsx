@@ -1,7 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { MenuData } from "@/components/Sidebar/menu-data";
-import TopContent from "@/components/TopContent";
 import AuthGuard from "@/guards/AuthGuard";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -26,8 +25,7 @@ export default function ProtectedLayout({
       <div className="flex flex-col flex-1 overflow-y-auto lg:p-4">
         <Navbar />
         <AuthGuard>
-          <div className="flex-1 space-y-4 p-2 pt-6">
-            <TopContent />
+          <div className="flex-1 p-1 lg:p-2 mt-4">
             {children}
           </div>
         </AuthGuard>

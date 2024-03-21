@@ -13,7 +13,7 @@ export interface DepartmentResponse {
 }
 
 //----------------------------------------------GET LIST----------------------------------------------
-export const departmentGetList = async () =>
+export const departmentGetAll = async () =>
   http.get<ApiSuccessResponse<DepartmentResponse[]>>("departments").then((res) => res.data);
 
 //----------------------------------------------GET BY ID----------------------------------------------

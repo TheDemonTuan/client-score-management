@@ -8,13 +8,13 @@ import { Input, Kbd, Skeleton } from "@nextui-org/react";
 const SearchNav = () => {
   const { authCanUse } = useAuth();
 
-  if (!authCanUse) return <Skeleton className="h-11 w-72 rounded-xl" />;
+  if (!authCanUse) return <Skeleton className="w-12 h-12 rounded-full lg:h-11 lg:w-72 lg:rounded-xl" />;
 
   return (
     <Input
       type="search"
       name="search"
-      variant="faded"
+      variant="bordered"
       color="secondary"
       size="lg"
       startContent={<IoIosSearch size={26} />}

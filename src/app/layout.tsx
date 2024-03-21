@@ -4,6 +4,7 @@ import "@/styles/globals.css";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import Provider from "@/components/provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const roboto = Roboto({ weight: ["100", "300", "400", "500", "700", "900"], subsets: ["latin"] });
 
@@ -31,6 +32,7 @@ export default function RootLayout({
           draggable
           theme="light"
         />
+        <Toaster />
       </body>
     </html>
   );

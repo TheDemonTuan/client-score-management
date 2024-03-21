@@ -28,7 +28,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { IoSearchOutline } from "react-icons/io5";
 import { useQuery } from "@tanstack/react-query";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
-import { DepartmentResponse, departmentGetList } from "@/api/departments";
+import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 import { AiOutlineFundView } from "react-icons/ai";
 import { MdOutlineDelete } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
@@ -87,7 +87,7 @@ export default function KhoaPage() {
     DepartmentResponse[]
   >({
     queryKey: ["departments"],
-    queryFn: async () => await departmentGetList(),
+    queryFn: async () => await departmentGetAll(),
     select: (res) => res?.data,
   });
 
@@ -249,21 +249,22 @@ export default function KhoaPage() {
   const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between gap-3 items-end">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <Input
             isClearable
-            className="w-full sm:max-w-[44%]"
+            className="w-full sm:max-w-[40%]"
             placeholder="Tìm kiếm theo tên khoa..."
+            variant="bordered"
             startContent={<IoSearchOutline />}
             value={filterValue}
             onClear={() => onClear()}
             onValueChange={onSearchChange}
           />
-          <div className="flex gap-3">
-            <Dropdown>
+          <div className="grid grid-flow-col gap-2 justify-between">
+            <Dropdown className="col-span-1 text-sm md:text-base">
               <DropdownTrigger className="hidden sm:flex">
-                <Button endContent={<RiArrowDownSLine className="text-small" />} variant="flat">
-                  Các cột hiển thị
+                <Button endContent={<RiArrowDownSLine className="text-small" />} variant="faded">
+                  Hiển thị
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
@@ -284,6 +285,8 @@ export default function KhoaPage() {
             <Button
               onPress={() => modalOpen("add_department")}
               color="secondary"
+              variant="shadow"
+              className="text-sm md:text-base col-span-3 sm:col-span-1"
               endContent={<FaPlus />}
               isLoading={departmentsIsPending}
             >
@@ -300,7 +303,8 @@ export default function KhoaPage() {
             defaultSelectedKeys={rowsPerPage.toString()}
             size="sm"
             labelPlacement="outside-left"
-            className="max-w-32"
+            variant="faded"
+            className="max-w-24 sm:max-w-32"
             onChange={onRowsPerPageChange}
           >
             <SelectItem key={5} value="5">
@@ -333,7 +337,7 @@ export default function KhoaPage() {
 
   const bottomContent = useMemo(() => {
     return (
-      <div className="py-2 px-2 flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-center p-2 gap-4">
         <Pagination
           isCompact
           showControls
@@ -355,15 +359,11 @@ export default function KhoaPage() {
         {selectedKeys !== "all" && selectedKeys.size > 0 && (
           <Button startContent={<MdOutlineDelete size={24} />} color="danger" variant="flat">
             <span>
-              <span className="font-bold">{selectedKeys.size}</span> khoa đã chọn
+              <span className="font-bold">{`${selectedKeys.size}/${filteredItems.length}`}</span>{" "}
+              khoa đã chọn
             </span>
           </Button>
         )}
-        <span className="text-small text-default-400">
-          {selectedKeys === "all"
-            ? "Đã chọn tất cả các khoa"
-            : `${selectedKeys.size} trên ${filteredItems.length} khoa đã chọn`}
-        </span>
       </div>
     );
   }, [page, pages, selectedKeys, filteredItems.length]);
@@ -371,8 +371,7 @@ export default function KhoaPage() {
   return (
     <>
       <Card>
-        <CardHeader></CardHeader>
-        <CardContent>
+        <CardContent className="p-2 lg:p-4">
           <Table
             aria-label="Danh sách các khoa"
             isHeaderSticky

@@ -31,7 +31,7 @@ import {
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { DepartmentResponse, departmentGetList } from "@/api/departments";
+import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 
 const EditInstructorModal = ({ modal_key }: { modal_key: string }) => {
   const queryClient = useQueryClient();
@@ -59,7 +59,7 @@ const EditInstructorModal = ({ modal_key }: { modal_key: string }) => {
     },
   });
 
-  const { mutateAsync: editMutateAsync, isPending: editIsPending } = useMutation<
+  const { mutate: editMutate, isPending: editIsPending } = useMutation<
     ApiSuccessResponse<InstructorReponse>,
     ApiErrorResponse,
     InstructorUpdateByIdParams
@@ -67,6 +67,7 @@ const EditInstructorModal = ({ modal_key }: { modal_key: string }) => {
     mutationFn: async (params) => await instructorUpdateById(params),
     onSuccess: (res) => {
       toast.success("Cập nhật giảng viên thành công !");
+      modalClose();
       queryClient.setQueryData(
         ["instructors"],
         (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
@@ -109,12 +110,12 @@ const EditInstructorModal = ({ modal_key }: { modal_key: string }) => {
     DepartmentResponse[]
   >({
     queryKey: ["departments"],
-    queryFn: async () => await departmentGetList(),
+    queryFn: async () => await departmentGetAll(),
     select: (res) => res?.data,
   });
 
-  const onSubmit = async (data: EditInstructorFormValidate) => {
-    await editMutateAsync({
+  const onSubmit = (data: EditInstructorFormValidate) => {
+    editMutate({
       id: modalData?.id,
       first_name: data.first_name,
       last_name: data.last_name,
@@ -126,7 +127,6 @@ const EditInstructorModal = ({ modal_key }: { modal_key: string }) => {
       gender: data.gender === "nu",
       department_id: parseInt(data.department_id),
     });
-    modalClose();
   };
 
   const handleSubmit = () => {
@@ -137,7 +137,7 @@ const EditInstructorModal = ({ modal_key }: { modal_key: string }) => {
     <Modal
       isOpen={isModalOpen}
       onOpenChange={modalClose}
-      placement="top-center"
+      placement="center"
       scrollBehavior="inside"
       size="lg"
       className={cn(editIsPending && "pointer-events-none")}
@@ -235,7 +235,7 @@ const EditInstructorModal = ({ modal_key }: { modal_key: string }) => {
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-flow-col items-center gap-2">
+                  <div className="grid grid-flow-row lg:grid-flow-col items-center gap-2">
                     <FormField
                       control={editInstructorForm.control}
                       name="birth_day"

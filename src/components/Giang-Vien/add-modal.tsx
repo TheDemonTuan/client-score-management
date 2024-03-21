@@ -34,7 +34,7 @@ import { InstructorCreateParams, InstructorReponse, instructorCreate } from "@/a
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { DepartmentResponse, departmentGetList } from "@/api/departments";
+import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 
 const AddInstructorModal = ({ modal_key }: { modal_key: string }) => {
   const queryClient = useQueryClient();
@@ -50,7 +50,7 @@ const AddInstructorModal = ({ modal_key }: { modal_key: string }) => {
     resolver: zodResolver(AddInstructorFormValidateSchema),
   });
 
-  const { mutateAsync: addMutateAsync, isPending: addIsPending } = useMutation<
+  const { mutate: addMutate, isPending: addIsPending } = useMutation<
     ApiSuccessResponse<InstructorReponse>,
     ApiErrorResponse,
     InstructorCreateParams
@@ -58,6 +58,8 @@ const AddInstructorModal = ({ modal_key }: { modal_key: string }) => {
     mutationFn: async (params) => await instructorCreate(params),
     onSuccess: (res) => {
       toast.success("Thêm giảng viên mới thành công !");
+      modalClose();
+      addInstructorForm.reset();
       queryClient.setQueryData(
         ["instructors"],
         (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
@@ -97,12 +99,12 @@ const AddInstructorModal = ({ modal_key }: { modal_key: string }) => {
     DepartmentResponse[]
   >({
     queryKey: ["departments"],
-    queryFn: async () => await departmentGetList(),
+    queryFn: async () => await departmentGetAll(),
     select: (res) => res?.data,
   });
 
-  const onSubmit = async (data: AddInstructorFormValidate) => {
-    await addMutateAsync({
+  const onSubmit = (data: AddInstructorFormValidate) => {
+    addMutate({
       first_name: data.first_name,
       last_name: data.last_name,
       email: data.email,
@@ -113,8 +115,6 @@ const AddInstructorModal = ({ modal_key }: { modal_key: string }) => {
       gender: data.gender === "nu",
       department_id: parseInt(data.department_id),
     });
-    modalClose();
-    addInstructorForm.reset();
   };
 
   const handleSubmit = () => {
@@ -126,7 +126,7 @@ const AddInstructorModal = ({ modal_key }: { modal_key: string }) => {
       isOpen={isModalOpen}
       onOpenChange={modalClose}
       scrollBehavior="inside"
-      placement="top-center"
+      placement="center"
       className={cn(addIsPending && "pointer-events-none")}
       size="lg"
       classNames={{
@@ -223,7 +223,7 @@ const AddInstructorModal = ({ modal_key }: { modal_key: string }) => {
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-flow-col items-center gap-2">
+                  <div className="grid grid-flow-row lg:grid-flow-col items-center gap-2">
                     <FormField
                       control={addInstructorForm.control}
                       name="birth_day"
