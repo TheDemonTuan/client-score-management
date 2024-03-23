@@ -4,32 +4,32 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
 import CrudModal from "../crud-modal";
-import { SubjectDeleteByIdParams, SubjectResponse, subjectDeleteById } from "@/api/subjects";
+import { ClassDeleteByIdParams, ClassResponse, classDeleteById } from "@/api/classes";
 
-const DeleteSubjectModal = () => {
+const DeleteClassModal = () => {
   const queryClient = useQueryClient();
 
   const { modalClose, modalData } = useModalStore(
     useShallow((state) => ({
       modalClose: state.modalClose,
-      modalData: state.modalData as SubjectResponse,
+      modalData: state.modalData as ClassResponse,
     }))
   );
 
   const { mutate: deleteMutate, isPending: deleteIsPending } = useMutation<
     ApiSuccessResponse,
     ApiErrorResponse,
-    SubjectDeleteByIdParams
+    ClassDeleteByIdParams
   >({
-    mutationFn: async (params) => await subjectDeleteById(params),
+    mutationFn: async (params) => await classDeleteById(params),
     onSuccess: () => {
-      toast.success(`Xoá môn học thành công!`);
-      queryClient.setQueryData(["subjects"], (oldData: ApiSuccessResponse<SubjectResponse[]>) =>
+      toast.success(`Xoá lớp học thành công!`);
+      queryClient.setQueryData(["classes"], (oldData: ApiSuccessResponse<ClassResponse[]>) =>
         oldData ? { ...oldData, data: oldData.data.filter((item) => item.id !== modalData?.id) } : oldData
       );
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Xoá môn học thất bại!");
+      toast.error(error?.response?.data?.message || "Xoá lớp học thất bại!");
     },
     onSettled: () => {
       modalClose();
@@ -41,12 +41,12 @@ const DeleteSubjectModal = () => {
   };
 
   return (
-    <CrudModal title="Xoá môn học" btnText="Xoá" isPending={deleteIsPending} handleSubmit={handleSubmit}>
+    <CrudModal title="Xoá lớp học" btnText="Xoá" isPending={deleteIsPending} handleSubmit={handleSubmit}>
       <p>
-        Bạn có đồng ý xoá môn học <span className="font-bold">{modalData?.name}</span> ?
+        Bạn có đồng ý xoá lớp học <span className="font-bold">{modalData?.name}</span> ?
       </p>
     </CrudModal>
   );
 };
 
-export default DeleteSubjectModal;
+export default DeleteClassModal;

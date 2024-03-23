@@ -10,7 +10,8 @@ export const EditDepartmentFormValidateSchema = z.object({
     })
     .max(100, {
       message: "Tên không được quá 100 ký tự.",
-    }),
+    })
+    .trim(),
 });
 
 export type EditDepartmentFormValidate = z.infer<typeof EditDepartmentFormValidateSchema>;

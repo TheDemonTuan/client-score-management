@@ -12,7 +12,6 @@ export const setJwt = async (jwt: string) => {
     name: process.env.NEXT_PUBLIC_JWT_NAME + "",
     value: jwt,
     maxAge: 60 * 60 * 24,
-    domain: "localhost",
     sameSite: "strict",
     secure: true,
     expires: new Date(Date.now() + 60 * 60 * 24 * 1000),
@@ -28,11 +27,4 @@ export const clearJwt = async () => {
     maxAge: 0,
   });
   return true;
-};
-
-export const getCsrf = async () => {
-  const headersList = headers();
-
-  const csrf_token = headersList.get("x-csrf");
-  return csrf_token;
 };

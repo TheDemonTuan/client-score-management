@@ -1,36 +1,23 @@
-import {
-  DepartmentResponse,
-  DepartmentUpdateByIdParams,
-  departmentUpdateById,
-} from "@/api/departments";
+import { DepartmentResponse, DepartmentUpdateByIdParams, departmentUpdateById } from "@/api/departments";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useModalStore } from "@/stores/modal-store";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-} from "@nextui-org/react";
+import { Input } from "@nextui-org/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { memo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { useShallow } from "zustand/react/shallow";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { EditDepartmentFormValidate, EditDepartmentFormValidateSchema } from "./edit.validate";
+import CRUDModal from "../crud-modal";
+import { useShallow } from "zustand/react/shallow";
 
-const EditDepartmentModal = ({ modal_key }: { modal_key: string }) => {
+const EditDepartmentModal = () => {
   const queryClient = useQueryClient();
 
-  const { isModalOpen, modalClose, modalData } = useModalStore(
+  const { modalClose, modalData } = useModalStore(
     useShallow((state) => ({
-      isModalOpen: state.modal_key === modal_key,
-      modalClose: state.modalClose,
       modalData: state.modalData as DepartmentResponse,
+      modalClose: state.modalClose,
     }))
   );
 
@@ -49,89 +36,59 @@ const EditDepartmentModal = ({ modal_key }: { modal_key: string }) => {
     mutationFn: async (params) => await departmentUpdateById(params),
     onSuccess: (res) => {
       toast.success("Cập nhật khoa thành công !");
-      modalClose();
-      queryClient.setQueryData(
-        ["departments"],
-        (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
-          oldData
-            ? {
-                ...oldData,
-                data: oldData.data.map((item) => (item.id === res.data.id ? res.data : item)),
-              }
-            : oldData
+      queryClient.setQueryData(["departments"], (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
+        oldData
+          ? {
+              ...oldData,
+              data: oldData.data.map((item) => (item.id === res.data.id ? res.data : item)),
+            }
+          : oldData
       );
+      modalClose();
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message || "Cập nhật khoa thất bại!");
     },
   });
 
-  const onSubmit = (data: EditDepartmentFormValidate) => {
-    editMutate({
-      id: modalData?.id,
-      name: data.name,
-    });
-  };
-
   const handleSubmit = () => {
-    editDepartmentForm.handleSubmit(onSubmit)();
+    editDepartmentForm.handleSubmit((data: EditDepartmentFormValidate) => {
+      editMutate({
+        id: modalData?.id,
+        name: data.name,
+      });
+    })();
   };
 
   return (
-    <Modal
-      isOpen={isModalOpen}
-      onOpenChange={modalClose}
-      placement="center"
-      scrollBehavior="inside"
-      classNames={{
-        backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
-      }}
-    >
-      <ModalContent>
-        {(onClose) => (
-          <>
-            <ModalHeader>Sửa khoa</ModalHeader>
-            <ModalBody>
-              <Form {...editDepartmentForm}>
-                <form method="post" className="space-y-3">
-                  <FormField
-                    control={editDepartmentForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        {/* <FormLabel>Tên</FormLabel> */}
-                        <FormControl>
-                          <Input
-                            autoFocus
-                            label="Tên"
-                            placeholder={modalData?.name || "Tên khoa"}
-                            isInvalid={!!editDepartmentForm.formState.errors.name}
-                            isRequired
-                            variant="faded"
-                            onClear={() => editDepartmentForm.setValue("name", "")}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+    <CRUDModal title="Chỉnh sửa khoa" btnText="Cập nhật" isPending={editIsPending} handleSubmit={handleSubmit}>
+      <Form {...editDepartmentForm}>
+        <form method="post" className="space-y-3">
+          <FormField
+            control={editDepartmentForm.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    autoFocus
+                    label="Tên"
+                    placeholder={modalData?.name || "Tên khoa"}
+                    isInvalid={!!editDepartmentForm.formState.errors.name}
+                    isRequired
+                    variant="faded"
+                    onClear={() => editDepartmentForm.setValue("name", "")}
+                    {...field}
                   />
-                </form>
-              </Form>
-            </ModalBody>
-            <ModalFooter>
-              <Button color="danger" variant="flat" onPress={onClose} isLoading={editIsPending}>
-                Đóng
-              </Button>
-              <Button onClick={handleSubmit} color="secondary" isLoading={editIsPending}>
-                Cập nhật
-              </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
-    </Modal>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
+    </CRUDModal>
   );
 };
 
-export default memo(EditDepartmentModal) as typeof EditDepartmentModal;
+export default EditDepartmentModal;

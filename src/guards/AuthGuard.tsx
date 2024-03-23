@@ -18,6 +18,7 @@ const AuthGuard = ({
   useEffect(() => {
     if (authIsError) {
       router.replace("/dang-nhap");
+      queryClient.clear();
     }
   }, [authIsError, queryClient, router]);
 

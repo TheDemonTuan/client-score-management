@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const EditDepartmentFormValidateSchema = z.object({
+export const EditSubjectFormValidateSchema = z.object({
   name: z
     .string({
       required_error: "Vui lòng nhập tên.",
@@ -10,7 +10,33 @@ export const EditDepartmentFormValidateSchema = z.object({
     })
     .max(100, {
       message: "Tên không được quá 100 ký tự.",
-    }),
+    })
+    .trim(),
+  credits: z
+    .string({
+      required_error: "Vui lòng nhập số tín chỉ.",
+    })
+    .trim(),
+  process_percentage: z
+    .string({
+      required_error: "Vui lòng nhập % quá trình.",
+    })
+    .trim(),
+  midterm_percentage: z
+    .string({
+      required_error: "Vui lòng nhập % giữa kì.",
+    })
+    .trim(),
+  final_percentage: z
+    .string({
+      required_error: "Vui lòng nhập % cuối kì.",
+    })
+    .trim(),
+  department_id: z
+    .string({
+      required_error: "Khoa không được để trống.",
+    })
+    .trim(),
 });
 
-export type EditDepartmentFormValidate = z.infer<typeof EditDepartmentFormValidateSchema>;
+export type EditSubjectFormValidate = z.infer<typeof EditSubjectFormValidateSchema>;

@@ -13,7 +13,7 @@ const config = {
   ],
   prefix: "",
   daisyui: {
-    themes: ["fantasy"],
+    themes: ["emerald"],
   },
   theme: {
     container: {

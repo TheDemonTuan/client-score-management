@@ -18,7 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@nextui-org/react";
 
 export function UserNav() {
-  const { authData,authCanUse } = useAuth();
+  const { authData, authCanUse } = useAuth();
   const queryClient = useQueryClient();
 
   if (!authCanUse) return <Skeleton className="h-11 w-11 rounded-full" />;
@@ -65,9 +65,7 @@ export function UserNav() {
               success: "Đăng xuất thành công 👌",
               error: "Đăng xuất thất bại 🤯",
             });
-            queryClient.removeQueries({
-              queryKey: ["auth"],
-            });
+            queryClient.clear();
           }}
         >
           Đăng xuất

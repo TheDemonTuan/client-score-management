@@ -26,52 +26,42 @@ import { FaPlus } from "react-icons/fa6";
 import { RiArrowDownSLine } from "react-icons/ri";
 import { Card, CardContent } from "@/components/ui/card";
 import { IoSearchOutline } from "react-icons/io5";
-import { useQuery, useSuspenseQueries } from "@tanstack/react-query";
-import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
+import {  useSuspenseQueries } from "@tanstack/react-query";
+import {  ApiSuccessResponse } from "@/lib/http";
 import { AiOutlineFundView } from "react-icons/ai";
 import { MdOutlineDelete } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
 import PreviewRelatedModal, {
-  PreviewRelatedAssignmentColumns,
-  PreviewRelatedClassColumns,
-  PreviewRelatedGradeColumns,
-  PreviewRelatedModalData,
+  PreviewRelatedStudentColumns,
   previewRelatedModalKey,
 } from "@/components/preview-related-modal";
 import { useModalStore } from "@/stores/modal-store";
-import { InstructorReponse, instructorGetAll } from "@/api/instructors";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
-import { ClassResponse } from "@/api/classes";
-import {
-  AddInstructorModal,
-  DeleteInstructorModal,
-  EditInstructorModal,
-  addInstructorModalKey,
-  deleteInstructorModalKey,
-  editInstructorModalKey,
-} from "@/components/Giang-Vien/modal";
+import { ClassResponse, classGetAll } from "@/api/classes";
+import { AddClassModal, DeleteClassModal, EditClassModal, addClassModalKey, deleteClassModalKey, editClassModalKey } from "@/components/Lop-Hoc/modal";
+import { InstructorReponse, instructorGetAll } from "@/api/instructors";
 
 const columns = [
-  { name: "Mã giảng viên", uid: "id", sortable: true },
-  { name: "Họ giảng viên", uid: "first_name", sortable: true },
-  { name: "Tên giảng viên", uid: "last_name", sortable: true },
-  { name: "Họ tên giảng viên", uid: "full_name", sortable: true },
-  { name: "Email", uid: "email", sortable: true },
-  { name: "Địa chỉ", uid: "address", sortable: true },
-  { name: "Ngày sinh", uid: "birth_day", sortable: true },
-  { name: "Số điện thoại", uid: "phone", sortable: true },
-  { name: "Giới tính", uid: "gender", sortable: true },
-  { name: "Trình độ", uid: "degree", sortable: true },
+  { name: "Mã lớp", uid: "id", sortable: true },
+  { name: "Tên lớp", uid: "name", sortable: true },
+  { name: "Số lượng tối đa", uid: "max_students", sortable: true },
   { name: "Thuộc khoa", uid: "department_id", sortable: true },
-  { name: "Số lượng lớp quản lý", uid: "classes", sortable: true },
-  { name: "Số lượng môn học giảng dạy", uid: "assignments", sortable: true },
-  { name: "Số lượng điểm đã chấm", uid: "grades", sortable: true },
+  { name: "Chủ nhiệm bởi", uid: "host_instructor_id", sortable: true },
+  { name: "Số lượng sinh viên", uid: "students", sortable: true },
   { name: "Hành động", uid: "actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["id", "full_name", "email", "phone", "gender", "department_id", "actions"];
+const INITIAL_VISIBLE_COLUMNS = [
+  "id",
+  "name",
+  "max_students",
+  "department_id",
+  "host_instructor_id",
+  "students",
+  "actions",
+];
 
-export default function GiangVienPage() {
+export default function LopHocQuanLyPage() {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
@@ -89,7 +79,8 @@ export default function GiangVienPage() {
   }, [visibleColumns]);
 
   //My Logic
-  const [departmentsQuery, instructorsQuery] = useSuspenseQueries({
+
+  const [departmentsQuery, instructorsQuery, classesQuery] = useSuspenseQueries({
     queries: [
       {
         queryKey: ["departments", { preload: false, select: ["id", "name"] }],
@@ -101,9 +92,18 @@ export default function GiangVienPage() {
         select: (res: ApiSuccessResponse<DepartmentResponse[]>) => res?.data,
       },
       {
-        queryKey: ["instructors"],
-        queryFn: async () => await instructorGetAll(),
+        queryKey: ["instructors", { preload: false, select: ["id", "first_name", "last_name"] }],
+        queryFn: async () =>
+          await instructorGetAll({
+            preload: false,
+            select: ["id", "first_name", "last_name"],
+          }),
         select: (res: ApiSuccessResponse<InstructorReponse[]>) => res?.data,
+      },
+      {
+        queryKey: ["classes"],
+        queryFn: async () => await classGetAll(),
+        select: (res: ApiSuccessResponse<ClassResponse[]>) => res?.data,
       },
     ],
   });
@@ -113,18 +113,16 @@ export default function GiangVienPage() {
   //End My Logic
 
   const filteredItems = useMemo(() => {
-    let filteredInstructors = [...(instructorsQuery.data ?? [])];
+    let filteredClasses = [...(classesQuery.data ?? [])];
 
     if (hasSearchFilter) {
-      filteredInstructors = filteredInstructors.filter(
-        (instructor) =>
-          instructor.first_name.toLowerCase().includes(filterValue.toLowerCase()) ||
-          instructor.last_name.toLowerCase().includes(filterValue.toLowerCase())
+      filteredClasses = filteredClasses.filter((classItem) =>
+        classItem.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
 
-    return filteredInstructors;
-  }, [instructorsQuery.data, hasSearchFilter, filterValue]);
+    return filteredClasses;
+  }, [classesQuery.data, hasSearchFilter, filterValue]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -136,9 +134,9 @@ export default function GiangVienPage() {
   }, [page, filteredItems, rowsPerPage]);
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a: InstructorReponse, b: InstructorReponse) => {
-      const first = a[sortDescriptor.column as keyof InstructorReponse] as string;
-      const second = b[sortDescriptor.column as keyof InstructorReponse] as string;
+    return [...items].sort((a: ClassResponse, b: ClassResponse) => {
+      const first = a[sortDescriptor.column as keyof ClassResponse] as string;
+      const second = b[sortDescriptor.column as keyof ClassResponse] as string;
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
@@ -146,62 +144,28 @@ export default function GiangVienPage() {
   }, [sortDescriptor, items]);
 
   const renderCell = useCallback(
-    (instructor: InstructorReponse, columnKey: Key) => {
-      const cellValue = instructor[columnKey as keyof InstructorReponse];
+    (classData: ClassResponse, columnKey: Key) => {
+      const cellValue = classData[columnKey as keyof ClassResponse];
 
       switch (columnKey) {
-        case "full_name":
-          return `${instructor.first_name} ${instructor.last_name}`;
-        case "gender":
-          return `${!instructor.gender ? "Nam" : "Nữ"}`;
+        case "host_instructor_id":
+          return `${
+            instructorsQuery.data?.find((instructor) => instructor.id === classData.host_instructor_id)?.first_name
+          } ${instructorsQuery.data?.find((instructor) => instructor.id === classData.host_instructor_id)?.last_name}`;
         case "department_id":
           return `
-              ${departmentsQuery.data.find((department) => department.id === instructor.department_id)?.name}`;
-        case "classes":
+              ${departmentsQuery.data?.find((department) => department.id === classData.department_id)?.name}`;
+        case "students":
           return (
             <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{instructor?.classes?.length ?? 0}</p>
+              <p className="font-medium text-base">{classData?.students?.length ?? 0}</p>
               <AiOutlineFundView
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
-                  setModalData<PreviewRelatedModalData<ClassResponse>>({
-                    data: instructor?.classes ?? [],
-                    columns: PreviewRelatedClassColumns,
-                  });
-                  modalOpen(previewRelatedModalKey);
-                }}
-              />
-            </div>
-          );
-        case "grades":
-          return (
-            <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{instructor?.grades?.length ?? 0}</p>
-              <AiOutlineFundView
-                className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
-                size={24}
-                onClick={() => {
-                  setModalData<PreviewRelatedModalData<ClassResponse>>({
-                    data: instructor?.grades ?? [],
-                    columns: PreviewRelatedGradeColumns,
-                  });
-                  modalOpen(previewRelatedModalKey);
-                }}
-              />
-            </div>
-          );
-        case "assignments":
-          return (
-            <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{instructor?.assignments?.length ?? 0}</p>
-              <AiOutlineFundView
-                className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
-                size={24}
-                onClick={() => {
-                  setModalData<PreviewRelatedModalData<ClassResponse>>({
-                    data: instructor?.assignments ?? [],
-                    columns: PreviewRelatedAssignmentColumns,
+                  setModalData({
+                    data: classData?.students ?? [],
+                    columns: PreviewRelatedStudentColumns,
                   });
                   modalOpen(previewRelatedModalKey);
                 }}
@@ -213,17 +177,17 @@ export default function GiangVienPage() {
             <div className="relative flex items-center gap-2">
               <FaRegEdit
                 onClick={() => {
-                  setModalData<InstructorReponse>(instructor);
-                  modalOpen(editInstructorModalKey);
+                  setModalData(classData);
+                  modalOpen(editClassModalKey);
                 }}
-                className="text-lg text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400"
+                className="text-xl lg:text-2xl text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400"
               />
               <MdOutlineDelete
                 onClick={() => {
-                  setModalData<InstructorReponse>(instructor);
-                  modalOpen(deleteInstructorModalKey);
+                  setModalData(classData);
+                  modalOpen(deleteClassModalKey);
                 }}
-                className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-gray-400"
+                className="text-xl lg:text-2xl text-danger cursor-pointer active:opacity-50 hover:text-gray-400"
               />
             </div>
           );
@@ -231,7 +195,7 @@ export default function GiangVienPage() {
           return cellValue;
       }
     },
-    [departmentsQuery.data, setModalData, modalOpen]
+    [instructorsQuery.data, departmentsQuery.data, setModalData, modalOpen]
   );
 
   const onRowsPerPageChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
@@ -259,9 +223,9 @@ export default function GiangVienPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <Input
             isClearable
-            isDisabled={instructorsQuery.isPending}
+            isDisabled={classesQuery.isPending}
             className="w-full sm:max-w-[40%]"
-            placeholder="Tìm kiếm theo họ hoặc tên giảng viên..."
+            placeholder="Tìm kiếm theo tên lớp..."
             variant="bordered"
             startContent={<IoSearchOutline />}
             value={filterValue}
@@ -290,19 +254,19 @@ export default function GiangVienPage() {
               </DropdownMenu>
             </Dropdown>
             <Button
-              onPress={() => modalOpen(addInstructorModalKey)}
+              onPress={() => modalOpen(addClassModalKey)}
               color="secondary"
               variant="solid"
               className="text-sm md:text-base col-span-3 sm:col-span-1"
               endContent={<FaPlus />}
-              isLoading={instructorsQuery.isPending}>
-              Thêm giảng viên mới
+              isLoading={classesQuery.isPending}>
+              Thêm lớp học mới
             </Button>
           </div>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Có <span className="font-bold text-black">{instructorsQuery.data.length}</span> giảng viên
+            Có <span className="font-bold text-black">{classesQuery.data.length}</span> lớp học
           </span>
           <Select
             label="Số dòng:"
@@ -310,7 +274,7 @@ export default function GiangVienPage() {
             size="sm"
             labelPlacement="outside-left"
             variant="faded"
-            className="max-w-24 sm:max-w-32"
+            className="max-w-28 sm:max-w-32"
             onChange={onRowsPerPageChange}>
             <SelectItem key={5} value="5">
               5
@@ -329,8 +293,8 @@ export default function GiangVienPage() {
       </div>
     );
   }, [
-    instructorsQuery.isPending,
-    instructorsQuery.data.length,
+    classesQuery.isPending,
+    classesQuery.data.length,
     filterValue,
     onSearchChange,
     visibleColumns,
@@ -357,20 +321,21 @@ export default function GiangVienPage() {
         {selectedKeys === "all" && (
           <Button startContent={<MdOutlineDelete size={24} />} color="danger" variant="flat">
             <span>
-              <span className="font-bold">tất cả</span> các giảng viên
+              <span className="font-bold">tất cả</span> các lớp học
             </span>
           </Button>
         )}
         {selectedKeys !== "all" && selectedKeys.size > 0 && (
           <Button startContent={<MdOutlineDelete size={24} />} color="danger" variant="flat">
             <span>
-              <span className="font-bold">{`${selectedKeys.size}/${filteredItems.length}`}</span> giảng viên đã chọn
+              <span className="font-bold">{`${selectedKeys.size}/${filteredItems.length}`}</span> lớp học đã chọn
             </span>
           </Button>
         )}
       </div>
     );
-  }, [page, pages, selectedKeys, filteredItems.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pages, selectedKeys, items.length, hasSearchFilter, filteredItems.length]);
 
   return (
     <>
@@ -381,6 +346,9 @@ export default function GiangVienPage() {
             isHeaderSticky
             bottomContent={bottomContent}
             bottomContentPlacement="outside"
+            classNames={{
+              wrapper: "max-h-[382px]",
+            }}
             selectedKeys={selectedKeys}
             selectionMode="multiple"
             checkboxesProps={{
@@ -402,9 +370,11 @@ export default function GiangVienPage() {
               )}
             </TableHeader>
             <TableBody
-              emptyContent={"Không tìm thấy giảng viên nào"}
+              emptyContent={"Không tìm thấy môn học nào"}
               loadingContent={<Spinner label="Loading..." color="secondary" size="md" />}
-              loadingState={instructorsQuery.isPending ? "loading" : "idle"}
+              loadingState={
+                instructorsQuery.isPending || departmentsQuery.isPending || classesQuery.isPending ? "loading" : "idle"
+              }
               items={sortedItems}>
               {(item) => (
                 <TableRow key={item.id}>
@@ -416,9 +386,9 @@ export default function GiangVienPage() {
         </CardContent>
       </Card>
       {modelKey === previewRelatedModalKey && <PreviewRelatedModal key={previewRelatedModalKey} />}
-      {modelKey === addInstructorModalKey && <AddInstructorModal key={addInstructorModalKey} />}
-      {modelKey === editInstructorModalKey && <EditInstructorModal key={editInstructorModalKey} />}
-      {modelKey === deleteInstructorModalKey && <DeleteInstructorModal key={deleteInstructorModalKey} />}
+      {modelKey === addClassModalKey && <AddClassModal key={addClassModalKey} />}
+      {modelKey === editClassModalKey && <EditClassModal key={editClassModalKey} />}
+      {modelKey === deleteClassModalKey && <DeleteClassModal key={deleteClassModalKey} />}
     </>
   );
 }

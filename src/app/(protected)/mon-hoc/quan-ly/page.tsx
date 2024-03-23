@@ -26,20 +26,26 @@ import { FaPlus } from "react-icons/fa6";
 import { RiArrowDownSLine } from "react-icons/ri";
 import { Card, CardContent } from "@/components/ui/card";
 import { IoSearchOutline } from "react-icons/io5";
-import { useQuery } from "@tanstack/react-query";
-import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
+import { useSuspenseQueries } from "@tanstack/react-query";
+import { ApiSuccessResponse } from "@/lib/http";
 import { AiOutlineFundView } from "react-icons/ai";
 import { MdOutlineDelete } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
 import PreviewRelatedModal, {
   PreviewRelatedClassColumns,
+  previewRelatedModalKey,
 } from "@/components/preview-related-modal";
 import { useModalStore } from "@/stores/modal-store";
-import AddSubjectModal from "@/components/Mon-Hoc/add-modal";
-import EditSubjectModal from "@/components/Mon-Hoc/edit-modal";
-import DeleteSubjectModal from "@/components/Mon-Hoc/delete-modal";
 import { SubjectResponse, subjectGetAll } from "@/api/subjects";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
+import {
+  AddSubjectModal,
+  DeleteSubjectModal,
+  EditSubjectModal,
+  addSubjectModalKey,
+  deleteSubjectModalKey,
+  editSubjectModalKey,
+} from "@/components/Mon-Hoc/modal";
 
 const columns = [
   { name: "Mã môn học", uid: "id", sortable: true },
@@ -67,7 +73,7 @@ const INITIAL_VISIBLE_COLUMNS = [
   "actions",
 ];
 
-export default function MonHocPage() {
+export default function MonHocQuanLyPage() {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
@@ -85,33 +91,31 @@ export default function MonHocPage() {
   }, [visibleColumns]);
 
   //My Logic
-  const { data: departmentsData, isPending: departmentsIsPending } = useQuery<
-    ApiSuccessResponse<DepartmentResponse[]>,
-    ApiErrorResponse,
-    DepartmentResponse[]
-  >({
-    queryKey: ["departments"],
-    queryFn: async () => await departmentGetAll(),
-    select: (res) => res?.data,
+  const [departmentsQuery, subjectsQuery] = useSuspenseQueries({
+    queries: [
+      {
+        queryKey: ["departments", { preload: false, select: ["id", "name"] }],
+        queryFn: async () =>
+          await departmentGetAll({
+            preload: false,
+            select: ["id", "name"],
+          }),
+        select: (res: ApiSuccessResponse<DepartmentResponse[]>) => res?.data,
+      },
+      {
+        queryKey: ["subjects"],
+        queryFn: async () => await subjectGetAll(),
+        select: (res: ApiSuccessResponse<SubjectResponse[]>) => res?.data,
+      },
+    ],
   });
 
-  const { data: subjectsData, isPending: subjectsIsPending } = useQuery<
-    ApiSuccessResponse<SubjectResponse[]>,
-    ApiErrorResponse,
-    SubjectResponse[]
-  >({
-    queryKey: ["subjects"],
-    queryFn: async () => await subjectGetAll(),
-    select: (res) => res?.data,
-    enabled: !departmentsIsPending,
-  });
-
-  const { modalOpen, changeModalData } = useModalStore();
+  const { modalOpen, setModalData, modelKey } = useModalStore();
 
   //End My Logic
 
   const filteredItems = useMemo(() => {
-    let filteredSubjects = [...(subjectsData ?? [])];
+    let filteredSubjects = [...(subjectsQuery.data ?? [])];
 
     if (hasSearchFilter) {
       filteredSubjects = filteredSubjects.filter((subject) =>
@@ -120,7 +124,7 @@ export default function MonHocPage() {
     }
 
     return filteredSubjects;
-  }, [subjectsData, hasSearchFilter, filterValue]);
+  }, [subjectsQuery.data, hasSearchFilter, filterValue]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -148,9 +152,7 @@ export default function MonHocPage() {
       switch (columnKey) {
         case "department_id":
           return `
-              ${
-                departmentsData?.find((department) => department.id === subject.department_id)?.name
-              }`;
+              ${departmentsQuery.data.find((department) => department.id === subject.department_id)?.name}`;
         case "grades":
           return (
             <div className="relative flex justify-center items-center gap-2">
@@ -159,11 +161,11 @@ export default function MonHocPage() {
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
-                  changeModalData({
+                  setModalData({
                     data: subject?.grades ?? [],
                     columns: PreviewRelatedClassColumns,
                   });
-                  modalOpen("preview_related");
+                  modalOpen(previewRelatedModalKey);
                 }}
               />
             </div>
@@ -176,11 +178,11 @@ export default function MonHocPage() {
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
-                  changeModalData({
+                  setModalData({
                     data: subject?.assignments ?? [],
                     columns: PreviewRelatedClassColumns,
                   });
-                  modalOpen("preview_related");
+                  modalOpen(previewRelatedModalKey);
                 }}
               />
             </div>
@@ -190,17 +192,17 @@ export default function MonHocPage() {
             <div className="relative flex items-center gap-2">
               <FaRegEdit
                 onClick={() => {
-                  changeModalData(subject);
-                  modalOpen("edit_subject");
+                  setModalData(subject);
+                  modalOpen(editSubjectModalKey);
                 }}
-                className="text-lg text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400"
+                className="text-xl text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400"
               />
               <MdOutlineDelete
                 onClick={() => {
-                  changeModalData(subject);
-                  modalOpen("delete_subject");
+                  setModalData(subject);
+                  modalOpen(deleteSubjectModalKey);
                 }}
-                className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-gray-400"
+                className="text-xl text-danger cursor-pointer active:opacity-50 hover:text-gray-400"
               />
             </div>
           );
@@ -208,7 +210,7 @@ export default function MonHocPage() {
           return cellValue;
       }
     },
-    [changeModalData, departmentsData, modalOpen]
+    [departmentsQuery.data, modalOpen, setModalData]
   );
 
   const onRowsPerPageChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
@@ -236,7 +238,7 @@ export default function MonHocPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <Input
             isClearable
-            isDisabled={subjectsIsPending}
+            isDisabled={subjectsQuery.isPending}
             className="w-full sm:max-w-[40%]"
             placeholder="Tìm kiếm theo tên môn học..."
             variant="bordered"
@@ -258,8 +260,7 @@ export default function MonHocPage() {
                 closeOnSelect={false}
                 selectedKeys={visibleColumns}
                 selectionMode="multiple"
-                onSelectionChange={setVisibleColumns}
-              >
+                onSelectionChange={setVisibleColumns}>
                 {columns.map((column) => (
                   <DropdownItem key={column.uid} className="capitalize">
                     {capitalize(column.name)}
@@ -268,20 +269,19 @@ export default function MonHocPage() {
               </DropdownMenu>
             </Dropdown>
             <Button
-              onPress={() => modalOpen("add_subject")}
+              onPress={() => modalOpen(addSubjectModalKey)}
               color="secondary"
               variant="solid"
               className="text-sm md:text-base col-span-3 sm:col-span-1"
               endContent={<FaPlus />}
-              isLoading={subjectsIsPending}
-            >
+              isLoading={subjectsQuery.isPending}>
               Thêm môn học mới
             </Button>
           </div>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Có <span className="font-bold text-black">{subjectsData?.length}</span> môn học
+            Có <span className="font-bold text-black">{subjectsQuery.data.length}</span> môn học
           </span>
           <Select
             label="Số dòng:"
@@ -289,9 +289,8 @@ export default function MonHocPage() {
             size="sm"
             labelPlacement="outside-left"
             variant="faded"
-            className="max-w-24 sm:max-w-32"
-            onChange={onRowsPerPageChange}
-          >
+            className="max-w-28 sm:max-w-32"
+            onChange={onRowsPerPageChange}>
             <SelectItem key={5} value="5">
               5
             </SelectItem>
@@ -309,11 +308,11 @@ export default function MonHocPage() {
       </div>
     );
   }, [
+    subjectsQuery.isPending,
+    subjectsQuery.data.length,
     filterValue,
     onSearchChange,
     visibleColumns,
-    subjectsIsPending,
-    subjectsData?.length,
     rowsPerPage,
     onRowsPerPageChange,
     onClear,
@@ -344,14 +343,14 @@ export default function MonHocPage() {
         {selectedKeys !== "all" && selectedKeys.size > 0 && (
           <Button startContent={<MdOutlineDelete size={24} />} color="danger" variant="flat">
             <span>
-              <span className="font-bold">{`${selectedKeys.size}/${filteredItems.length}`}</span>{" "}
-              môn học đã chọn
+              <span className="font-bold">{`${selectedKeys.size}/${filteredItems.length}`}</span> môn học đã chọn
             </span>
           </Button>
         )}
       </div>
     );
-  }, [page, pages, selectedKeys, filteredItems.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pages, selectedKeys, items.length, hasSearchFilter, filteredItems.length]);
 
   return (
     <>
@@ -374,15 +373,13 @@ export default function MonHocPage() {
             topContent={topContent}
             topContentPlacement="outside"
             onSelectionChange={setSelectedKeys}
-            onSortChange={setSortDescriptor}
-          >
+            onSortChange={setSortDescriptor}>
             <TableHeader columns={headerColumns}>
               {(column) => (
                 <TableColumn
                   key={column.uid}
                   align={column.uid === "actions" ? "center" : "start"}
-                  allowsSorting={column.sortable}
-                >
+                  allowsSorting={column.sortable}>
                   {column.name}
                 </TableColumn>
               )}
@@ -390,9 +387,8 @@ export default function MonHocPage() {
             <TableBody
               emptyContent={"Không tìm thấy môn học nào"}
               loadingContent={<Spinner label="Loading..." color="secondary" size="md" />}
-              loadingState={subjectsIsPending ? "loading" : "idle"}
-              items={sortedItems}
-            >
+              loadingState={subjectsQuery.isPending ? "loading" : "idle"}
+              items={sortedItems}>
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) => <TableCell>{renderCell(item, columnKey) as any}</TableCell>}
@@ -402,10 +398,10 @@ export default function MonHocPage() {
           </Table>
         </CardContent>
       </Card>
-      <PreviewRelatedModal modal_key="preview_related" />
-      <AddSubjectModal modal_key="add_subject" />
-      <EditSubjectModal modal_key="edit_subject" />
-      <DeleteSubjectModal modal_key="delete_subject" />
+      {modelKey === previewRelatedModalKey && <PreviewRelatedModal key={previewRelatedModalKey} />}
+      {modelKey === addSubjectModalKey && <AddSubjectModal key={addSubjectModalKey} />}
+      {modelKey === editSubjectModalKey && <EditSubjectModal key={editSubjectModalKey} />}
+      {modelKey === deleteSubjectModalKey && <DeleteSubjectModal key={deleteSubjectModalKey} />}
     </>
   );
 }

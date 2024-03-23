@@ -10,7 +10,8 @@ export const AddInstructorFormValidateSchema = z.object({
     })
     .max(50, {
       message: "Họ không được đài hơn 50 ký tự.",
-    }),
+    })
+    .trim(),
   last_name: z
     .string({
       required_error: "Tên không được để trống.",
@@ -20,14 +21,16 @@ export const AddInstructorFormValidateSchema = z.object({
     })
     .max(30, {
       message: "Tên không được dài hơn 30 ký tự.",
-    }),
+    })
+    .trim(),
   email: z
     .string({
       required_error: "Email không được để trống.",
     })
     .email({
       message: "Email không hợp lệ.",
-    }),
+    })
+    .trim(),
   address: z
     .string({
       required_error: "Địa chỉ không được để trống.",
@@ -37,7 +40,8 @@ export const AddInstructorFormValidateSchema = z.object({
     })
     .max(100, {
       message: "Địa chỉ không được dài hơn 100 ký tự.",
-    }),
+    })
+    .trim(),
   degree: z
     .string({
       required_error: "Bằng cấp không được để trống.",
@@ -47,7 +51,8 @@ export const AddInstructorFormValidateSchema = z.object({
     })
     .max(50, {
       message: "Bằng cấp không được dài hơn 50 ký tự.",
-    }),
+    })
+    .trim(),
   phone: z
     .string({
       required_error: "Số điện thoại không được để trống.",
@@ -57,16 +62,21 @@ export const AddInstructorFormValidateSchema = z.object({
     })
     .max(11, {
       message: "Số điện thoại không được dài hơn 11 ký tự.",
-    }),
-  gender: z.string({
-    required_error: "Giới tính không được để trống.",
-  }),
+    })
+    .trim(),
+  gender: z
+    .string({
+      required_error: "Giới tính không được để trống.",
+    })
+    .trim(),
   birth_day: z.date({
     required_error: "Ngày sinh không được để trống.",
   }),
-  department_id: z.string({
-    required_error: "Khoa không được để trống.",
-  }),
+  department_id: z
+    .string({
+      required_error: "Khoa không được để trống.",
+    })
+    .trim(),
 });
 
 export type AddInstructorFormValidate = z.infer<typeof AddInstructorFormValidateSchema>;

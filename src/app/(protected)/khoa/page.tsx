@@ -35,13 +35,23 @@ import { FaRegEdit } from "react-icons/fa";
 import PreviewRelatedModal, {
   PreviewRelatedClassColumns,
   PreviewRelatedInstructorColumns,
+  PreviewRelatedModalData,
   PreviewRelatedStudentColumns,
   PreviewRelatedSubjectColumns,
+  previewRelatedModalKey,
 } from "@/components/preview-related-modal";
 import { useModalStore } from "@/stores/modal-store";
-import AddDepartmentModal from "@/components/Khoa/add-modal";
-import EditDepartmentModal from "@/components/Khoa/edit-modal";
-import DeleteDepartmentModal from "@/components/Khoa/delete-modal";
+import { ClassResponse } from "@/api/classes";
+import { InstructorReponse } from "@/api/instructors";
+import { SubjectResponse } from "@/api/subjects";
+import {
+  AddDepartmentModal,
+  DeleteDepartmentModal,
+  EditDepartmentModal,
+  addDepartmentModalKey,
+  deleteDepartmentModalKey,
+  editDepartmentModalKey,
+} from "@/components/Khoa/modal";
 
 const columns = [
   { name: "Mã khoa", uid: "id", sortable: true },
@@ -53,15 +63,7 @@ const columns = [
   { name: "Hành động", uid: "actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = [
-  "id",
-  "name",
-  "classes",
-  "students",
-  "instructors",
-  "subjects",
-  "actions",
-];
+const INITIAL_VISIBLE_COLUMNS = ["id", "name", "classes", "students", "instructors", "subjects", "actions"];
 
 export default function KhoaPage() {
   const [filterValue, setFilterValue] = useState("");
@@ -91,7 +93,7 @@ export default function KhoaPage() {
     select: (res) => res?.data,
   });
 
-  const { modalOpen, changeModalData } = useModalStore();
+  const { modalOpen, setModalData, modelKey } = useModalStore();
 
   //End My Logic
 
@@ -139,8 +141,8 @@ export default function KhoaPage() {
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
-                  modalOpen("preview_related");
-                  changeModalData({
+                  modalOpen(previewRelatedModalKey);
+                  setModalData<PreviewRelatedModalData<ClassResponse>>({
                     data: department?.classes ?? [],
                     columns: PreviewRelatedClassColumns,
                   });
@@ -157,8 +159,8 @@ export default function KhoaPage() {
                 size={24}
                 onClick={() => {
                   {
-                    modalOpen("preview_related");
-                    changeModalData({
+                    modalOpen(previewRelatedModalKey);
+                    setModalData<PreviewRelatedModalData<InstructorReponse>>({
                       data: department?.instructors ?? [],
                       columns: PreviewRelatedInstructorColumns,
                     });
@@ -175,8 +177,8 @@ export default function KhoaPage() {
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
-                  modalOpen("preview_related");
-                  changeModalData({
+                  modalOpen(previewRelatedModalKey);
+                  setModalData<PreviewRelatedModalData<ClassResponse>>({
                     data: department?.students ?? [],
                     columns: PreviewRelatedStudentColumns,
                   });
@@ -192,8 +194,8 @@ export default function KhoaPage() {
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
-                  modalOpen("preview_related");
-                  changeModalData({
+                  modalOpen(previewRelatedModalKey);
+                  setModalData<PreviewRelatedModalData<SubjectResponse>>({
                     data: department?.subjects ?? [],
                     columns: PreviewRelatedSubjectColumns,
                   });
@@ -206,15 +208,15 @@ export default function KhoaPage() {
             <div className="relative flex items-center gap-2">
               <FaRegEdit
                 onClick={() => {
-                  changeModalData(department);
-                  modalOpen("edit_department");
+                  setModalData<DepartmentResponse>(department);
+                  modalOpen(editDepartmentModalKey);
                 }}
                 className="text-lg text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400"
               />
               <MdOutlineDelete
                 onClick={() => {
-                  changeModalData(department);
-                  modalOpen("delete_department");
+                  setModalData<DepartmentResponse>(department);
+                  modalOpen(deleteDepartmentModalKey);
                 }}
                 className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-gray-400"
               />
@@ -224,7 +226,7 @@ export default function KhoaPage() {
           return cellValue;
       }
     },
-    [changeModalData, modalOpen]
+    [modalOpen, setModalData]
   );
 
   const onRowsPerPageChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
@@ -273,8 +275,7 @@ export default function KhoaPage() {
                 closeOnSelect={false}
                 selectedKeys={visibleColumns}
                 selectionMode="multiple"
-                onSelectionChange={setVisibleColumns}
-              >
+                onSelectionChange={setVisibleColumns}>
                 {columns.map((column) => (
                   <DropdownItem key={column.uid} className="capitalize">
                     {capitalize(column.name)}
@@ -283,13 +284,12 @@ export default function KhoaPage() {
               </DropdownMenu>
             </Dropdown>
             <Button
-              onPress={() => modalOpen("add_department")}
+              onPress={() => modalOpen(addDepartmentModalKey)}
               color="secondary"
-              variant="shadow"
+              variant="solid"
               className="text-sm md:text-base col-span-3 sm:col-span-1"
               endContent={<FaPlus />}
-              isLoading={departmentsIsPending}
-            >
+              isLoading={departmentsIsPending}>
               Thêm khoa mới
             </Button>
           </div>
@@ -305,8 +305,7 @@ export default function KhoaPage() {
             labelPlacement="outside-left"
             variant="faded"
             className="max-w-24 sm:max-w-32"
-            onChange={onRowsPerPageChange}
-          >
+            onChange={onRowsPerPageChange}>
             <SelectItem key={5} value="5">
               5
             </SelectItem>
@@ -359,8 +358,7 @@ export default function KhoaPage() {
         {selectedKeys !== "all" && selectedKeys.size > 0 && (
           <Button startContent={<MdOutlineDelete size={24} />} color="danger" variant="flat">
             <span>
-              <span className="font-bold">{`${selectedKeys.size}/${filteredItems.length}`}</span>{" "}
-              khoa đã chọn
+              <span className="font-bold">{`${selectedKeys.size}/${filteredItems.length}`}</span> khoa đã chọn
             </span>
           </Button>
         )}
@@ -389,15 +387,13 @@ export default function KhoaPage() {
             topContent={topContent}
             topContentPlacement="outside"
             onSelectionChange={setSelectedKeys}
-            onSortChange={setSortDescriptor}
-          >
+            onSortChange={setSortDescriptor}>
             <TableHeader columns={headerColumns}>
               {(column) => (
                 <TableColumn
                   key={column.uid}
                   align={column.uid === "actions" ? "center" : "start"}
-                  allowsSorting={column.sortable}
-                >
+                  allowsSorting={column.sortable}>
                   {column.name}
                 </TableColumn>
               )}
@@ -406,21 +402,18 @@ export default function KhoaPage() {
               emptyContent={"Không tìm thấy khoa nào"}
               loadingContent={<Spinner label="Loading..." color="secondary" size="md" />}
               loadingState={departmentsIsPending ? "loading" : "idle"}
-              items={sortedItems}
-            >
+              items={sortedItems}>
               {(item) => (
-                <TableRow key={item.id}>
-                  {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                </TableRow>
+                <TableRow key={item.id}>{(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}</TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
-      <PreviewRelatedModal modal_key="preview_related" />
-      <AddDepartmentModal modal_key="add_department" />
-      <EditDepartmentModal modal_key="edit_department" />
-      <DeleteDepartmentModal modal_key="delete_department" />
+      {modelKey === previewRelatedModalKey && <PreviewRelatedModal key={previewRelatedModalKey} />}
+      {modelKey === addDepartmentModalKey && <AddDepartmentModal key={addDepartmentModalKey} />}
+      {modelKey === editDepartmentModalKey && <EditDepartmentModal key={editDepartmentModalKey} />}
+      {modelKey === deleteDepartmentModalKey && <DeleteDepartmentModal key={deleteDepartmentModalKey} />}
     </>
   );
 }

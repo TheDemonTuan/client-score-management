@@ -2,26 +2,20 @@
 
 import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/use-toast";
+import { useModalStore } from "@/stores/modal-store";
 import { Button } from "@nextui-org/react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useQueryClient, useQueryErrorResetBoundary } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { IoIosRefresh } from "react-icons/io";
 import { VscBracketError } from "react-icons/vsc";
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  const queryClient = useQueryClient();
+export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const { toast } = useToast();
-  const router = useRouter();
+  const { reset: resetTanQuery } = useQueryErrorResetBoundary();
+  const queryClient = useQueryClient();
+  const { modalClose } = useModalStore();
 
   useEffect(() => {
-    console.error(error);
     toast({
       variant: "destructive",
       title: "Uh oh! Something went wrong.",
@@ -30,17 +24,16 @@ export default function Error({
         <ToastAction
           onClick={() => {
             reset();
-            queryClient.invalidateQueries({
-              queryKey: ["auth"],
-            });
+            resetTanQuery();
+            modalClose();
+            queryClient.clear();
           }}
-          altText="Try again"
-        >
+          altText="Try again">
           Try again
         </ToastAction>
       ),
     });
-  }, [error, queryClient, reset, toast]);
+  }, [error, modalClose, queryClient, reset, resetTanQuery, toast]);
 
   return (
     <>
@@ -48,14 +41,13 @@ export default function Error({
         <Button
           onClick={() => {
             reset();
-            queryClient.invalidateQueries({
-              queryKey: ["auth"],
-            });
+            resetTanQuery();
+            modalClose();
+            queryClient.clear();
           }}
           isIconOnly
           color="danger"
-          aria-label="Like"
-        >
+          aria-label="Like">
           <IoIosRefresh size={28} />
         </Button>
         <h1 className="mb-4 text-6xl font-semibold text-red-500">{error.message}</h1>

@@ -49,6 +49,21 @@ export const PreviewRelatedInstructorColumns = [
   { name: "Trình độ", uid: "degree" },
 ];
 
+export const PreviewRelatedGradeColumns = [
+  { name: "Mã", uid: "id" },
+  { name: "Điểm quá trình", uid: "process_score" },
+  { name: "Điểm giữa kì", uid: "midterm_score" },
+  { name: "Điểm cuối kì", uid: "final_score" },
+  { name: "Mã môn học", uid: "subject_id" },
+  { name: "Mã sinh viên", uid: "student_id" },
+  { name: "Mã giáo viên dạy", uid: "by_instructor_id" },
+];
+
+export const PreviewRelatedAssignmentColumns = [
+  { name: "Mã môn học", uid: "subject_id" },
+  { name: "Mã giáo viên", uid: "instructor_id" },
+];
+
 export const PreviewRelatedStudentColumns = [
   { name: "Mã", uid: "id" },
   { name: "Họ", uid: "first_name" },
@@ -60,15 +75,16 @@ export const PreviewRelatedStudentColumns = [
   { name: "Mã lớp", uid: "class_id" },
 ];
 
-export interface PreviewRelatedModalData {
-  data: any[];
+export interface PreviewRelatedModalData<T = any> {
+  data: T[];
   columns: { name: string; uid: string }[];
 }
 
-const PreviewRelatedModal = ({ modal_key }: { modal_key: string }) => {
-  const { isModalOpen, modalClose, modalData } = useModalStore(
+export const previewRelatedModalKey = "preview_related_modal";
+
+const PreviewRelatedModal = () => {
+  const { modalClose, modalData } = useModalStore(
     useShallow((state) => ({
-      isModalOpen: state.modal_key === modal_key,
       modalClose: state.modalClose,
       modalData: state.modalData as PreviewRelatedModalData,
     }))
@@ -87,7 +103,7 @@ const PreviewRelatedModal = ({ modal_key }: { modal_key: string }) => {
   }, [modalData?.data, page]);
   return (
     <Modal
-      isOpen={isModalOpen}
+      isOpen
       onOpenChange={modalClose}
       placement="center"
       size="5xl"
@@ -117,9 +133,6 @@ const PreviewRelatedModal = ({ modal_key }: { modal_key: string }) => {
                     />
                   </div>
                 }
-                classNames={{
-                  wrapper: "min-h-[222px]",
-                }}
               >
                 <TableHeader>
                   {modalData?.columns.map((column) => (
@@ -128,7 +141,7 @@ const PreviewRelatedModal = ({ modal_key }: { modal_key: string }) => {
                 </TableHeader>
                 <TableBody emptyContent={"Không tìm thấy dữ liệu liên quan nào"} items={items}>
                   {(item) => (
-                    <TableRow key={item?.name}>
+                    <TableRow key={item}>
                       {modalData?.columns.map(
                         (column) =>
                           column.uid === "gender" ? (

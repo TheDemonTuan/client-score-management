@@ -1,8 +1,10 @@
-import { TbCategory } from "react-icons/tb";
+import { TbCategory, TbSettingsCode } from "react-icons/tb";
 import { PiStudent } from "react-icons/pi";
-import { SiBookstack, SiGoogleclassroom } from "react-icons/si";
+import { SiGoogleclassroom } from "react-icons/si";
 import { LiaChalkboardTeacherSolid, LiaClipboardListSolid } from "react-icons/lia";
 import { IoSchoolOutline } from "react-icons/io5";
+import { ImBooks } from "react-icons/im";
+import { GiArchiveRegister } from "react-icons/gi";
 
 export const MenuData = [
   {
@@ -18,7 +20,7 @@ export const MenuData = [
   {
     title: "Giảng viên",
     link: "/giang-vien",
-    icon: LiaChalkboardTeacherSolid ,
+    icon: LiaChalkboardTeacherSolid,
   },
   {
     title: "Khoa",
@@ -28,16 +30,40 @@ export const MenuData = [
   {
     title: "Môn học",
     link: "/mon-hoc",
-    icon: SiBookstack,
+    icon: ImBooks,
+    children: [
+      {
+        title: "Quản lý",
+        link: "/quan-ly",
+        icon: TbSettingsCode,
+      },
+      {
+        title: "Đăng ký",
+        link: "/dang-ky",
+        icon: GiArchiveRegister,
+      },
+    ],
   },
   {
     title: "Lớp học",
     link: "/lop-hoc",
     icon: SiGoogleclassroom,
+    children: [
+      {
+        title: "Quản lý",
+        link: "/quan-ly",
+        icon: TbSettingsCode,
+      },
+      {
+        title: "Đăng ký",
+        link: "/dang-ky",
+        icon: GiArchiveRegister,
+      },
+    ],
   },
   {
     title: "Điểm",
     link: "/diem",
-    icon: LiaClipboardListSolid ,
+    icon: LiaClipboardListSolid,
   },
 ];

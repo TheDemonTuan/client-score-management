@@ -1,17 +1,17 @@
 import { create } from "zustand";
 
 interface ModalState {
-  modal_key: string;
+  modelKey: string;
   modalData: any;
   modalOpen: (key: string) => void;
   modalClose: () => void;
-  changeModalData: (data: any) => void;
+  setModalData: <T = any>(data: T) => void;
 }
 
 export const useModalStore = create<ModalState>()((set) => ({
-  modal_key: "",
+  modelKey: "",
   modalData: {},
-  modalOpen: (key: string) => set({ modal_key: key }),
-  modalClose: () => set({ modal_key: "" }),
-  changeModalData: (data) => set({ modalData: data }),
+  modalOpen: (key) => set({ modelKey: key }),
+  modalClose: () => set({ modelKey: "" }),
+  setModalData: (data) => set({ modalData: data }),
 }));

@@ -1,31 +1,17 @@
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useModalStore } from "@/stores/modal-store";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-} from "@nextui-org/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { memo } from "react";
 import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
-import { cn } from "@/lib/cn";
-import {
-  InstructorDeleteByIdParams,
-  InstructorReponse,
-  instructorDeleteById,
-} from "@/api/instructors";
+import { InstructorDeleteByIdParams, InstructorReponse, instructorDeleteById } from "@/api/instructors";
 import { DepartmentResponse } from "@/api/departments";
+import CrudModal from "../crud-modal";
 
-const DeleteInstructorModal = ({ modal_key }: { modal_key: string }) => {
+const DeleteInstructorModal = () => {
   const queryClient = useQueryClient();
 
-  const { isModalOpen, modalClose, modalData } = useModalStore(
+  const { modalClose, modalData } = useModalStore(
     useShallow((state) => ({
-      isModalOpen: state.modal_key === modal_key,
       modalClose: state.modalClose,
       modalData: state.modalData as InstructorReponse,
     }))
@@ -39,39 +25,35 @@ const DeleteInstructorModal = ({ modal_key }: { modal_key: string }) => {
     mutationFn: async (params) => await instructorDeleteById(params),
     onSuccess: () => {
       toast.success(`Xoá giảng viên thành công !`);
-      modalClose();
-      queryClient.setQueryData(
-        ["instructors"],
-        (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
-          oldData
-            ? {
-                ...oldData,
-                data: oldData.data.filter((instructor) => instructor.id !== modalData?.id),
-              }
-            : oldData
+      queryClient.setQueryData(["instructors"], (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
+        oldData
+          ? {
+              ...oldData,
+              data: oldData.data.filter((instructor) => instructor.id !== modalData?.id),
+            }
+          : oldData
       );
-      queryClient.setQueryData(
-        ["departments"],
-        (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
-          oldData
-            ? {
-                ...oldData,
-                data: oldData.data.map((department) =>
-                  department.id === modalData?.department_id
-                    ? {
-                        ...department,
-                        instructors: department.instructors.filter(
-                          (instructor) => instructor.id !== modalData?.id
-                        ),
-                      }
-                    : department
-                ),
-              }
-            : oldData
+      queryClient.setQueryData(["departments"], (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
+        oldData
+          ? {
+              ...oldData,
+              data: oldData.data.map((department) =>
+                department.id === modalData?.department_id
+                  ? {
+                      ...department,
+                      instructors: department.instructors.filter((instructor) => instructor.id !== modalData?.id),
+                    }
+                  : department
+              ),
+            }
+          : oldData
       );
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message || "Xoá giảng viên thất bại!");
+    },
+    onSettled: () => {
+      modalClose();
     },
   });
 
@@ -80,35 +62,16 @@ const DeleteInstructorModal = ({ modal_key }: { modal_key: string }) => {
   };
 
   return (
-    <Modal
-      isOpen={isModalOpen}
-      onOpenChange={modalClose}
-      placement="center"
-      className={cn(deleteIsPending && "pointer-events-none")}
-      classNames={{
-        backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
-      }}
-    >
-      <ModalContent>
-        {(onClose) => (
-          <>
-            <ModalHeader className="flex flex-col gap-1">Xoá giảng viên</ModalHeader>
-            <ModalBody>
-              <p>Bạn có đồng ý xoá giảng viên này?</p>
-            </ModalBody>
-            <ModalFooter>
-              <Button color="danger" variant="flat" onPress={onClose} isLoading={deleteIsPending}>
-                Đóng
-              </Button>
-              <Button onClick={handleSubmit} color="secondary" isLoading={deleteIsPending}>
-                Xoá
-              </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
-    </Modal>
+    <CrudModal title="Xoá giảng khoa" btnText="Xoá" isPending={deleteIsPending} handleSubmit={handleSubmit}>
+      <p>
+        Bạn có đồng ý xoá giảng viên{" "}
+        <span className="font-bold">
+          {modalData?.first_name} {modalData?.last_name}
+        </span>
+        ?
+      </p>
+    </CrudModal>
   );
 };
 
-export default memo(DeleteInstructorModal) as typeof DeleteInstructorModal;
+export default DeleteInstructorModal;
