@@ -13,7 +13,7 @@ import { EditInstructorFormValidate, EditInstructorFormValidateSchema } from "./
 import { InstructorReponse, InstructorUpdateByIdParams, instructorUpdateById } from "@/api/instructors";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "@/components/ui/calendar";
-import { DepartmentResponse, departmentGetById } from "@/api/departments";
+import { DepartmentResponse, departmentGetAll, departmentGetById } from "@/api/departments";
 import CrudModal from "../crud-modal";
 
 const modal_key = "edit_instructor";
@@ -48,17 +48,12 @@ const EditInstructorModal = () => {
   }, [editForm, modalData]);
 
   const { data: departmentData, isPending: departmentIsPending } = useQuery<
-    ApiSuccessResponse<DepartmentResponse>,
+    ApiSuccessResponse<DepartmentResponse[]>,
     ApiErrorResponse,
-    DepartmentResponse
+    DepartmentResponse[]
   >({
-    queryKey: ["departments", { id: modalData?.department_id, preload: false, select: ["id", "name"] }],
-    queryFn: async () =>
-      await departmentGetById({
-        id: modalData?.department_id,
-        preload: false,
-        select: ["name"],
-      }),
+    queryKey: ["departments"],
+    queryFn: async () => await departmentGetAll(),
     select: (res) => res?.data,
   });
 
@@ -335,7 +330,7 @@ const EditInstructorModal = () => {
                     label="Khoa"
                     {...field}>
                     <SelectItem key={modalData?.department_id} className="capitalize">
-                      {departmentData?.name}
+                      {departmentData?.find((department) => department.id === modalData?.department_id)?.name}
                     </SelectItem>
                   </Select>
                 </FormControl>

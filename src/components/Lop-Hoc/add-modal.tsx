@@ -28,23 +28,6 @@ const AddClassModal = () => {
     addForm.setValue("host_instructor_id", "");
   }, [addForm, departmentId]);
 
-  useEffect(() => {
-    return () => {
-      // console.log("run");
-      queryClient.removeQueries({
-        queryKey: [
-          "instructors",
-          "department",
-          {
-            id: "NaN",
-            preload: false,
-            select: ["id", "first_name", "last_name"],
-          },
-        ],
-      });
-    };
-  }, []);
-
   const { mutate: addMutate, isPending: addIsPending } = useMutation<
     ApiSuccessResponse<ClassResponse>,
     ApiErrorResponse,

@@ -1,9 +1,9 @@
 .active {
-  @apply  bg-blue-400/25 rounded-md text-blue-500 font-semibold underline
+  @apply  bg-secondary/25 rounded-md text-secondary font-semibold underline
 }
 
 .active > a {
-  @apply after:border-blue-500 after:border-2 after:h-full after:absolute after:top-1/2 after:-translate-y-1/2 after:-right-2 after:rounded-ss-md after:rounded-es-md
+  @apply after:border-secondary after:border-2 after:h-full after:absolute after:top-1/2 after:-translate-y-1/2 after:-right-2 after:rounded-ss-md after:rounded-es-md
 }
 
 .sidebarOpen {

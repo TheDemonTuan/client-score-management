@@ -12,12 +12,13 @@ export const useAuth = () => {
     isPending: authIsPending,
     isLoading: authIsLoading,
     refetch: authRefetch,
+    isStale: authIsStale,
   } = useQuery<ApiSuccessResponse<UserResponse>, ApiErrorResponse, UserResponse>({
     queryKey: ["auth"],
     queryFn: async () => await authVerify(),
     select: (res) => res?.data,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 0,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   return {
@@ -29,6 +30,7 @@ export const useAuth = () => {
     authIsSuccess,
     authIsError,
     authRefetch,
-    authCanUse: !authIsFetching && authIsSuccess && authData,
+    authIsStale,
+    authCanUse: !authIsLoading && authIsSuccess && authData,
   };
 };

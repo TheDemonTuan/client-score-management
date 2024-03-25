@@ -15,7 +15,7 @@ const AddDepartmentModal = () => {
 
   const { modalClose } = useModalStore();
 
-  const addDepartmentForm = useForm<AddDepartmentFormValidate>({
+  const addForm = useForm<AddDepartmentFormValidate>({
     resolver: zodResolver(AddDepartmentFormValidateSchema),
   });
 
@@ -35,7 +35,7 @@ const AddDepartmentModal = () => {
             }
           : oldData
       );
-      addDepartmentForm.reset();
+      addForm.reset();
       modalClose();
     },
     onError: (error) => {
@@ -44,8 +44,10 @@ const AddDepartmentModal = () => {
   });
 
   const handleSubmit = () => {
-    addDepartmentForm.handleSubmit((data: AddDepartmentFormValidate) => {
+    addForm.handleSubmit((data: AddDepartmentFormValidate) => {
       addMutate({
+        id: data.id,
+        symbol: data.symbol,
         name: data.name,
       });
     })();
@@ -53,22 +55,66 @@ const AddDepartmentModal = () => {
 
   return (
     <CrudModal title="Thêm khoa" btnText="Thêm" isPending={addIsPending} handleSubmit={handleSubmit}>
-      <Form {...addDepartmentForm}>
+      <Form {...addForm}>
         <form method="post" className="space-y-3">
           <FormField
-            control={addDepartmentForm.control}
+            control={addForm.control}
+            name="id"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    label="Mã"
+                    placeholder="Nhập mã khoa"
+                    isInvalid={!!addForm.formState.errors.id}
+                    isRequired
+                    variant="faded"
+                    type="number"
+                    onClear={() => addForm.setValue("id", 0)}
+                    {...field}
+                    value={addForm.getValues("id") + ""}
+                    onChange={(e) => {
+                      addForm.setValue("id", parseInt(e.target.value));
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={addForm.control}
+            name="symbol"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    label="Ký hiệu"
+                    placeholder="Nhập ký hiệu khoa"
+                    isInvalid={!!addForm.formState.errors.symbol}
+                    isRequired
+                    variant="faded"
+                    onClear={() => addForm.setValue("symbol", "")}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={addForm.control}
             name="name"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <Input
-                    autoFocus
                     label="Tên"
                     placeholder="Nhập tên khoa"
-                    isInvalid={!!addDepartmentForm.formState.errors.name}
+                    isInvalid={!!addForm.formState.errors.name}
                     isRequired
                     variant="faded"
-                    onClear={() => addDepartmentForm.resetField("name")}
+                    onClear={() => addForm.resetField("name")}
                     {...field}
                   />
                 </FormControl>

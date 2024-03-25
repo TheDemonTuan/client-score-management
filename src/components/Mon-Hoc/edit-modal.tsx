@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { EditSubjectFormValidate, EditSubjectFormValidateSchema } from "./edit.validate";
 import CrudModal from "../crud-modal";
 import { SubjectResponse, SubjectUpdateByIdParams, subjectUpdateById } from "@/api/subjects";
-import { DepartmentResponse, departmentGetById } from "@/api/departments";
+import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 
 const EditSubjectModal = () => {
   const queryClient = useQueryClient();
@@ -26,26 +26,21 @@ const EditSubjectModal = () => {
     resolver: zodResolver(EditSubjectFormValidateSchema),
     values: {
       name: modalData?.name || "",
-      credits: modalData?.credits + "",
-      process_percentage: modalData?.process_percentage + "",
-      midterm_percentage: modalData?.midterm_percentage + "",
-      final_percentage: modalData?.final_percentage + "",
+      credits: modalData?.credits || 0,
+      process_percentage: modalData?.process_percentage || 0,
+      midterm_percentage: modalData?.midterm_percentage || 0,
+      final_percentage: modalData?.final_percentage || 0,
       department_id: modalData?.department_id + "",
     },
   });
 
-  const { data: departmentData, isPending: departmentIsPending } = useQuery<
-    ApiSuccessResponse<DepartmentResponse>,
+  const { data: departmentsData, isLoading: departmentsIsLoading } = useQuery<
+    ApiSuccessResponse<DepartmentResponse[]>,
     ApiErrorResponse,
-    DepartmentResponse
+    DepartmentResponse[]
   >({
-    queryKey: ["departments", { id: modalData?.department_id, preload: false, select: ["id", "name"] }],
-    queryFn: async () =>
-      await departmentGetById({
-        id: modalData?.department_id,
-        preload: false,
-        select: ["name"],
-      }),
+    queryKey: ["departments"],
+    queryFn: async () => await departmentGetAll(),
     select: (res) => res?.data,
   });
 
@@ -65,10 +60,25 @@ const EditSubjectModal = () => {
             }
           : oldData
       );
+      queryClient.setQueryData(["departments"], (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
+        oldData
+          ? {
+              ...oldData,
+              data: oldData.data.map((department) =>
+                department.id === res.data.department_id
+                  ? {
+                      ...department,
+                      subjects: department.subjects.map((subject) => (subject.id === res.data.id ? res.data : subject)),
+                    }
+                  : department
+              ),
+            }
+          : oldData
+      );
       modalClose();
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Cập nhật khoa thất bại!");
+      toast.error(error?.response?.data?.message || "Cập nhật môn học thất bại!");
     },
   });
 
@@ -77,10 +87,10 @@ const EditSubjectModal = () => {
       editMutate({
         id: modalData?.id,
         name: data?.name,
-        credits: parseInt(data?.credits),
-        process_percentage: parseInt(data?.process_percentage),
-        midterm_percentage: parseInt(data?.midterm_percentage),
-        final_percentage: parseInt(data?.final_percentage),
+        credits: data?.credits,
+        process_percentage: data?.process_percentage,
+        midterm_percentage: data?.midterm_percentage,
+        final_percentage: data?.final_percentage,
       });
     })();
   };
@@ -123,8 +133,13 @@ const EditSubjectModal = () => {
                     isInvalid={!!editForm.formState.errors.credits}
                     isRequired
                     variant="faded"
-                    onClear={() => editForm.setValue("credits", "")}
+                    type="number"
+                    onClear={() => editForm.setValue("credits", 0)}
                     {...field}
+                    value={editForm.getValues("credits") + ""}
+                    onChange={(e) => {
+                      editForm.setValue("credits", parseInt(e.target.value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -144,8 +159,13 @@ const EditSubjectModal = () => {
                     isInvalid={!!editForm.formState.errors.process_percentage}
                     isRequired
                     variant="faded"
-                    onClear={() => editForm.setValue("process_percentage", "")}
+                    type="number"
+                    onClear={() => editForm.setValue("process_percentage", 0)}
                     {...field}
+                    value={editForm.getValues("process_percentage") + ""}
+                    onChange={(e) => {
+                      editForm.setValue("process_percentage", parseInt(e.target.value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -165,8 +185,13 @@ const EditSubjectModal = () => {
                     isInvalid={!!editForm.formState.errors.midterm_percentage}
                     isRequired
                     variant="faded"
-                    onClear={() => editForm.setValue("midterm_percentage", "")}
+                    type="number"
+                    onClear={() => editForm.setValue("midterm_percentage", 0)}
                     {...field}
+                    value={editForm.getValues("midterm_percentage") + ""}
+                    onChange={(e) => {
+                      editForm.setValue("midterm_percentage", parseInt(e.target.value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -186,8 +211,13 @@ const EditSubjectModal = () => {
                     isInvalid={!!editForm.formState.errors.final_percentage}
                     isRequired
                     variant="faded"
-                    onClear={() => editForm.setValue("final_percentage", "")}
+                    type="number"
+                    onClear={() => editForm.setValue("final_percentage", 0)}
                     {...field}
+                    value={editForm.getValues("final_percentage") + ""}
+                    onChange={(e) => {
+                      editForm.setValue("final_percentage", parseInt(e.target.value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -204,14 +234,14 @@ const EditSubjectModal = () => {
                     isInvalid={!!editForm.formState.errors.department_id}
                     isRequired
                     variant="faded"
-                    isLoading={departmentIsPending}
+                    isLoading={departmentsIsLoading}
                     defaultSelectedKeys={[field.value]}
                     selectedKeys={[field.value]}
                     disabledKeys={[field.value]}
                     label="Khoa"
                     {...field}>
                     <SelectItem key={modalData?.department_id} className="capitalize">
-                      {departmentData?.name}
+                      {departmentsData?.find((item) => item.id === modalData?.department_id)?.name}
                     </SelectItem>
                   </Select>
                 </FormControl>

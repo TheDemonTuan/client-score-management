@@ -35,24 +35,24 @@ const MenuSide = () => {
         <li key={index} className={cn(current === item?.link && `${styles["active"]}`)}>
           {!item?.children && (
             <Link href={item?.link} title={item?.title} onClick={() => setIsOpen(false)}>
-              <item.icon size={23} className="text-blue-400" />
+              <item.icon size={23} className="text-secondary" />
               {item?.title}
             </Link>
           )}
           {item?.children && (
-            <details open>
-              <summary>
-                <item.icon size={23} className="text-blue-400" />
+            <details open={current.startsWith(item?.link)}>
+              <summary className={cn(current.startsWith(item?.link) && "underline text-secondary")}>
+                <item.icon size={23} className="text-secondary" />
                 {item?.title}
               </summary>
-              <ul>
+              <ul className="space-y-2">
                 {item?.children.map((child, index) => (
                   <li key={index} className={cn(current === item?.link + child?.link && `${styles["active"]}`)}>
                     <Link
                       href={item?.link + child?.link}
                       title={child?.title + " " + item?.title}
                       onClick={() => setIsOpen(false)}>
-                      <child.icon size={23} className="text-blue-400" />
+                      <child.icon size={23} className="text-secondary" />
                       {child?.title}
                     </Link>
                   </li>

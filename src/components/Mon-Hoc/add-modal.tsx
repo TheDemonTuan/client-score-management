@@ -36,6 +36,21 @@ const AddSubjectModal = () => {
             }
           : oldData
       );
+      queryClient.setQueryData(["departments"], (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
+        oldData
+          ? {
+              ...oldData,
+              data: oldData.data.map((department) =>
+                department.id === res.data.department_id
+                  ? {
+                      ...department,
+                      subjects: [...department.subjects, res.data],
+                    }
+                  : department
+              ),
+            }
+          : oldData
+      );
       addForm.reset();
       modalClose();
     },
@@ -49,12 +64,8 @@ const AddSubjectModal = () => {
     ApiErrorResponse,
     DepartmentResponse[]
   >({
-    queryKey: ["departments", { preload: false, select: ["id", "name"] }],
-    queryFn: async () =>
-      await departmentGetAll({
-        preload: false,
-        select: ["id", "name"],
-      }),
+    queryKey: ["departments"],
+    queryFn: async () => await departmentGetAll(),
     select: (res) => res?.data,
   });
 
@@ -62,10 +73,10 @@ const AddSubjectModal = () => {
     addForm.handleSubmit((data: AddSubjectFormValidate) => {
       addMutate({
         name: data?.name,
-        credits: parseInt(data?.credits),
-        process_percentage: parseInt(data?.process_percentage),
-        midterm_percentage: parseInt(data?.midterm_percentage),
-        final_percentage: parseInt(data?.final_percentage),
+        credits: data?.credits,
+        process_percentage: data?.process_percentage,
+        midterm_percentage: data?.midterm_percentage,
+        final_percentage: data?.final_percentage,
         department_id: parseInt(data?.department_id),
       });
     })();
@@ -109,8 +120,13 @@ const AddSubjectModal = () => {
                     isInvalid={!!addForm.formState.errors.credits}
                     isRequired
                     variant="faded"
-                    onClear={() => addForm.setValue("credits", "")}
+                    type="number"
+                    onClear={() => addForm.setValue("credits", 0)}
                     {...field}
+                    value={addForm.getValues("credits") + ""}
+                    onChange={(e) => {
+                      addForm.setValue("credits", parseInt(e.target.value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -135,8 +151,13 @@ const AddSubjectModal = () => {
                         <span className="text-default-400 text-small">%</span>
                       </div>
                     }
-                    onClear={() => addForm.setValue("process_percentage", "")}
+                    type="number"
+                    onClear={() => addForm.setValue("process_percentage", 0)}
                     {...field}
+                    value={addForm.getValues("process_percentage") + ""}
+                    onChange={(e) => {
+                      addForm.setValue("process_percentage", parseInt(e.target.value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -161,8 +182,13 @@ const AddSubjectModal = () => {
                         <span className="text-default-400 text-small">%</span>
                       </div>
                     }
-                    onClear={() => addForm.setValue("midterm_percentage", "")}
+                    type="number"
+                    onClear={() => addForm.setValue("midterm_percentage", 0)}
                     {...field}
+                    value={addForm.getValues("midterm_percentage") + ""}
+                    onChange={(e) => {
+                      addForm.setValue("midterm_percentage", parseInt(e.target.value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -187,8 +213,13 @@ const AddSubjectModal = () => {
                         <span className="text-default-400 text-small">%</span>
                       </div>
                     }
-                    onClear={() => addForm.setValue("final_percentage", "")}
+                    type="number"
+                    onClear={() => addForm.setValue("final_percentage", 0)}
                     {...field}
+                    value={addForm.getValues("final_percentage") + ""}
+                    onChange={(e) => {
+                      addForm.setValue("final_percentage", parseInt(e.target.value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />

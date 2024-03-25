@@ -1,10 +1,10 @@
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useModalStore } from "@/stores/modal-store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
 import CrudModal from "../crud-modal";
 import { ClassDeleteByIdParams, ClassResponse, classDeleteById } from "@/api/classes";
+import { toast } from "react-toastify";
 
 const DeleteClassModal = () => {
   const queryClient = useQueryClient();

@@ -164,12 +164,11 @@ const EditClassModal = () => {
                     variant="faded"
                     isLoading={departmentIsPending}
                     defaultSelectedKeys={[field.value]}
-                    selectedKeys={[field.value]}
                     disabledKeys={[field.value]}
                     label="Khoa"
                     {...field}>
-                    <SelectItem key={modalData?.department_id} className="capitalize">
-                      {departmentData?.name}
+                    <SelectItem key={modalData?.department_id} className="capitalize" textValue={departmentData?.name}>
+                      {departmentData?.name + ""}
                     </SelectItem>
                   </Select>
                 </FormControl>
@@ -191,8 +190,8 @@ const EditClassModal = () => {
                     isDisabled={instructorsIsFetching}
                     disabledKeys={[field.value]}
                     items={instructorsData ?? []}
+                    defaultSelectedKeys={[field.value]}
                     label="Chọn giảng viên chủ nhiệm"
-                    selectedKeys={[field.value]}
                     {...field}>
                     {(item) => (
                       <SelectItem key={item.id} className="capitalize">

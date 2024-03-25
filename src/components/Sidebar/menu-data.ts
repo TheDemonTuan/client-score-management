@@ -1,26 +1,50 @@
 import { TbCategory, TbSettingsCode } from "react-icons/tb";
 import { PiStudent } from "react-icons/pi";
 import { SiGoogleclassroom } from "react-icons/si";
-import { LiaChalkboardTeacherSolid, LiaClipboardListSolid } from "react-icons/lia";
-import { IoSchoolOutline } from "react-icons/io5";
+import { LiaChalkboardTeacherSolid, LiaUsersCogSolid } from "react-icons/lia";
 import { ImBooks } from "react-icons/im";
-import { GiArchiveRegister } from "react-icons/gi";
+import { GiArchiveRegister, GiNotebook } from "react-icons/gi";
+import { FaUniversity } from "react-icons/fa";
 
 export const MenuData = [
   {
     title: "Dashboard",
     link: "/",
-    icon: IoSchoolOutline,
+    icon: FaUniversity,
   },
   {
     title: "Sinh viên",
     link: "/sinh-vien",
     icon: PiStudent,
+    children: [
+      {
+        title: "Quản lý",
+        link: "/quan-ly",
+        icon: TbSettingsCode,
+      },
+      {
+        title: "Đăng ký môn học",
+        link: "/dang-ky-mon-hoc",
+        icon: GiArchiveRegister,
+      },
+    ],
   },
   {
     title: "Giảng viên",
     link: "/giang-vien",
     icon: LiaChalkboardTeacherSolid,
+    children: [
+      {
+        title: "Quản lý",
+        link: "/quan-ly",
+        icon: TbSettingsCode,
+      },
+      {
+        title: "Phân công môn học",
+        link: "/dang-ky",
+        icon: GiArchiveRegister,
+      },
+    ],
   },
   {
     title: "Khoa",
@@ -31,18 +55,6 @@ export const MenuData = [
     title: "Môn học",
     link: "/mon-hoc",
     icon: ImBooks,
-    children: [
-      {
-        title: "Quản lý",
-        link: "/quan-ly",
-        icon: TbSettingsCode,
-      },
-      {
-        title: "Đăng ký",
-        link: "/dang-ky",
-        icon: GiArchiveRegister,
-      },
-    ],
   },
   {
     title: "Lớp học",
@@ -55,15 +67,15 @@ export const MenuData = [
         icon: TbSettingsCode,
       },
       {
-        title: "Đăng ký",
+        title: "Quản lý sinh viên",
         link: "/dang-ky",
-        icon: GiArchiveRegister,
+        icon: LiaUsersCogSolid,
       },
     ],
   },
   {
     title: "Điểm",
     link: "/diem",
-    icon: LiaClipboardListSolid,
+    icon: GiNotebook,
   },
 ];

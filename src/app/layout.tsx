@@ -5,7 +5,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import Provider from "@/components/provider";
 import { Toaster as CustomToaster } from "@/components/ui/toaster";
-import { Toaster } from 'react-hot-toast';
 
 const roboto = Roboto({ weight: ["100", "300", "400", "500", "700", "900"], subsets: ["latin"] });
 
@@ -34,7 +33,6 @@ export default function RootLayout({
           theme="light"
         />
         <CustomToaster />
-        <Toaster position="top-center" reverseOrder={true} />
       </body>
     </html>
   );

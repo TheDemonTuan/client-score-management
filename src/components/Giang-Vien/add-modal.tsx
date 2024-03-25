@@ -67,12 +67,8 @@ const AddInstructorModal = () => {
     ApiErrorResponse,
     DepartmentResponse[]
   >({
-    queryKey: ["departments", { preload: false, select: ["id", "name"] }],
-    queryFn: async () =>
-      await departmentGetAll({
-        preload: false,
-        select: ["id", "name"],
-      }),
+    queryKey: ["departments"],
+    queryFn: async () => await departmentGetAll(),
     select: (res) => res?.data,
   });
 

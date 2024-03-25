@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
 import CrudModal from "../crud-modal";
 import { SubjectDeleteByIdParams, SubjectResponse, subjectDeleteById } from "@/api/subjects";
+import { DepartmentResponse } from "@/api/departments";
 
 const DeleteSubjectModal = () => {
   const queryClient = useQueryClient();
@@ -27,6 +28,21 @@ const DeleteSubjectModal = () => {
       queryClient.setQueryData(["subjects"], (oldData: ApiSuccessResponse<SubjectResponse[]>) =>
         oldData ? { ...oldData, data: oldData.data.filter((item) => item.id !== modalData?.id) } : oldData
       );
+      queryClient.setQueryData(["departments"], (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
+      oldData
+        ? {
+            ...oldData,
+            data: oldData.data.map((department) =>
+              department.id === modalData?.department_id
+                ? {
+                    ...department,
+                    subjects: department.subjects.filter((subject) => subject.id !== modalData?.id),
+                  }
+                : department
+            ),
+          }
+        : oldData
+    );
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message || "Xoá môn học thất bại!");

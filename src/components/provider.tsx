@@ -10,8 +10,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: false,
-      staleTime: 1000 * 60 * 5,
-      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
     },
     mutations: {
       retry: false,
@@ -23,9 +22,7 @@ const Provider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   return (
     <QueryClientProvider client={queryClient}>
-      <NextUIProvider navigate={router.push}>
-          {children}
-      </NextUIProvider>
+      <NextUIProvider navigate={router.push}>{children}</NextUIProvider>
       <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
     </QueryClientProvider>
   );

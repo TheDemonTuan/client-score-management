@@ -6,6 +6,7 @@ import { preloadTransform, selectTransform } from "@/lib/query-transform";
 
 export interface DepartmentResponse {
   id: number;
+  symbol: string;
   name: string;
   classes: ClassResponse[];
   students: any[];
@@ -20,11 +21,7 @@ export interface DepartmentGetAllParams {
 }
 
 export const departmentGetAll = async (params?: DepartmentGetAllParams) =>
-  http
-    .get<ApiSuccessResponse<DepartmentResponse[]>>(
-      `departments?preload=${preloadTransform(params?.preload)}&select=${selectTransform(params?.select)}`
-    )
-    .then((res) => res.data);
+  http.get<ApiSuccessResponse<DepartmentResponse[]>>(`departments`).then((res) => res.data);
 
 //----------------------------------------------GET BY ID----------------------------------------------
 export interface DepartmentGetByIdParams extends Pick<DepartmentResponse, "id"> {
@@ -40,7 +37,7 @@ export const departmentGetById = async (params: DepartmentGetByIdParams) =>
     .then((res) => res.data);
 
 //----------------------------------------------CREATE----------------------------------------------
-export interface DepartmentCreateParams extends Pick<DepartmentResponse, "name"> {}
+export interface DepartmentCreateParams extends Pick<DepartmentResponse, "id" | "symbol" | "name"> {}
 
 export const departmentCreate = async (params: DepartmentCreateParams) =>
   http.post<ApiSuccessResponse<DepartmentResponse>>("departments", params).then((res) => res.data);

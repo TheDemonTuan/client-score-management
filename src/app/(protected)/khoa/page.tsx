@@ -52,9 +52,11 @@ import {
   deleteDepartmentModalKey,
   editDepartmentModalKey,
 } from "@/components/Khoa/modal";
+import { BsThreeDotsVertical } from "react-icons/bs";
 
 const columns = [
   { name: "Mã khoa", uid: "id", sortable: true },
+  { name: "Ký hiệu", uid: "symbol", sortable: true },
   { name: "Tên khoa", uid: "name", sortable: true },
   { name: "Số lượng sinh viên", uid: "students", sortable: true },
   { name: "Số lượng giảng viên", uid: "instructors", sortable: true },
@@ -63,7 +65,7 @@ const columns = [
   { name: "Hành động", uid: "actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["id", "name", "classes", "students", "instructors", "subjects", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["id", "symbol", "name", "classes", "students", "instructors", "subjects", "actions"];
 
 export default function KhoaPage() {
   const [filterValue, setFilterValue] = useState("");
@@ -205,21 +207,38 @@ export default function KhoaPage() {
           );
         case "actions":
           return (
-            <div className="relative flex items-center gap-2">
-              <FaRegEdit
-                onClick={() => {
-                  setModalData<DepartmentResponse>(department);
-                  modalOpen(editDepartmentModalKey);
-                }}
-                className="text-lg text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400"
-              />
-              <MdOutlineDelete
-                onClick={() => {
-                  setModalData<DepartmentResponse>(department);
-                  modalOpen(deleteDepartmentModalKey);
-                }}
-                className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-gray-400"
-              />
+            <div className="relative flex items-center justify-center gap-2">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button isIconOnly size="sm" variant="light">
+                    <BsThreeDotsVertical size={21} />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="action">
+                  <DropdownItem
+                    aria-label="Chỉnh sửa"
+                    startContent={
+                      <FaRegEdit className="text-lg lg:text-xl text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400" />
+                    }
+                    onClick={() => {
+                      setModalData(department);
+                      modalOpen(editDepartmentModalKey);
+                    }}>
+                    Chỉnh sửa
+                  </DropdownItem>
+                  <DropdownItem
+                    aria-label="Xoá"
+                    startContent={
+                      <MdOutlineDelete className="text-xl lg:text-2xl text-danger cursor-pointer active:opacity-50 hover:text-gray-400" />
+                    }
+                    onClick={() => {
+                      setModalData(department);
+                      modalOpen(deleteDepartmentModalKey);
+                    }}>
+                    Xoá
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             </div>
           );
         default:
@@ -296,7 +315,7 @@ export default function KhoaPage() {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Có <span className="font-bold text-black">{departmentsData?.length}</span> khoa
+            Có <span className="font-bold text-secondary">{departmentsData?.length}</span> khoa
           </span>
           <Select
             label="Số dòng:"
@@ -373,16 +392,11 @@ export default function KhoaPage() {
           <Table
             aria-label="Danh sách các khoa"
             isHeaderSticky
+            color="secondary"
             bottomContent={bottomContent}
             bottomContentPlacement="outside"
-            classNames={{
-              wrapper: "max-h-[382px]",
-            }}
             selectedKeys={selectedKeys}
             selectionMode="multiple"
-            checkboxesProps={{
-              color: "secondary",
-            }}
             sortDescriptor={sortDescriptor}
             topContent={topContent}
             topContentPlacement="outside"

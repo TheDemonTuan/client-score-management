@@ -21,9 +21,11 @@ const EditDepartmentModal = () => {
     }))
   );
 
-  const editDepartmentForm = useForm<EditDepartmentFormValidate>({
+  const editForm = useForm<EditDepartmentFormValidate>({
     resolver: zodResolver(EditDepartmentFormValidateSchema),
     values: {
+      id: modalData?.id || 0,
+      symbol: modalData?.symbol || "",
       name: modalData?.name || "",
     },
   });
@@ -52,9 +54,9 @@ const EditDepartmentModal = () => {
   });
 
   const handleSubmit = () => {
-    editDepartmentForm.handleSubmit((data: EditDepartmentFormValidate) => {
+    editForm.handleSubmit((data: EditDepartmentFormValidate) => {
       editMutate({
-        id: modalData?.id,
+        id: data.id,
         name: data.name,
       });
     })();
@@ -62,10 +64,57 @@ const EditDepartmentModal = () => {
 
   return (
     <CRUDModal title="Chỉnh sửa khoa" btnText="Cập nhật" isPending={editIsPending} handleSubmit={handleSubmit}>
-      <Form {...editDepartmentForm}>
+      <Form {...editForm}>
         <form method="post" className="space-y-3">
           <FormField
-            control={editDepartmentForm.control}
+            control={editForm.control}
+            name="id"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    label="Mã"
+                    placeholder={modalData?.id + "" || "Mã khoa"}
+                    isInvalid={!!editForm.formState.errors.id}
+                    isDisabled
+                    isRequired
+                    variant="faded"
+                    type="number"
+                    onClear={() => editForm.setValue("symbol", "")}
+                    {...field}
+                    value={editForm.getValues("id") + ""}
+                    onChange={(e) => {
+                      editForm.setValue("id", parseInt(e.target.value));
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={editForm.control}
+            name="symbol"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    label="Ký hiệu"
+                    isDisabled
+                    placeholder={modalData?.symbol || "Ký hiệu khoa"}
+                    isInvalid={!!editForm.formState.errors.symbol}
+                    isRequired
+                    variant="faded"
+                    onClear={() => editForm.setValue("symbol", "")}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={editForm.control}
             name="name"
             render={({ field }) => (
               <FormItem>
@@ -74,10 +123,10 @@ const EditDepartmentModal = () => {
                     autoFocus
                     label="Tên"
                     placeholder={modalData?.name || "Tên khoa"}
-                    isInvalid={!!editDepartmentForm.formState.errors.name}
+                    isInvalid={!!editForm.formState.errors.name}
                     isRequired
                     variant="faded"
-                    onClear={() => editDepartmentForm.setValue("name", "")}
+                    onClear={() => editForm.setValue("name", "")}
                     {...field}
                   />
                 </FormControl>

@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
+import NextImage from "next/image";
 import Link from "next/link";
 import MenuSide from "./menu";
 import { useSideBarStore } from "@/stores/sidebar-store";
 import { cn } from "@/lib/cn";
 import styles from "@/styles/sidebar.module.css";
-
+import { Image } from "@nextui-org/react";
 
 const Sidebar = () => {
   const { isOpen } = useSideBarStore();
@@ -17,11 +17,11 @@ const Sidebar = () => {
         "flex flex-col w-[80%] sm:w-64 h-dvh shadow-sidebar bg-white sticky top-0 space-y-2 transition-all z-50",
         isOpen && styles.sidebarOpen,
         !isOpen && "lg_max:animate-appearance-out lg_max:hidden"
-      )}
-    >
+      )}>
       <div className="flex items-center gap-2 h-16 border-b border-gray-300">
         <Link href={"/"}>
           <Image
+            as={NextImage}
             className="object-contain w-16 h-16"
             src="/logo.webp"
             priority={true}
@@ -29,6 +29,7 @@ const Sidebar = () => {
             width={500}
             height={500}
             quality={100}
+            isBlurred
           />
         </Link>
         <div className="text-sm lg:text-md">

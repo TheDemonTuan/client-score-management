@@ -9,7 +9,8 @@ export interface SubjectResponse {
   final_percentage: number;
   department_id: number;
   grades: any[];
-  assignments: any[];
+  instructor_assignments: any[];
+  student_registrations: any[];
 }
 
 //----------------------------------------------GET LIST----------------------------------------------

@@ -11,7 +11,7 @@ const AuthGuard = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
-  const { authCanUse, authIsError } = useAuth();
+  const { authCanUse, authIsError, authIsStale } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -22,14 +22,16 @@ const AuthGuard = ({
     }
   }, [authIsError, queryClient, router]);
 
+  useEffect(() => {
+    if (authIsStale) {
+      queryClient.invalidateQueries({
+        queryKey: ["auth"],
+      });
+    }
+  }, [authIsStale, queryClient]);
+
   return (
-    <>
-      {authCanUse ? (
-        children
-      ) : (
-        <Spinner label="Loading..." color="secondary" size="lg" className="w-full h-full" />
-      )}
-    </>
+    <>{authCanUse ? children : <Spinner label="Loading..." color="secondary" size="lg" className="w-full h-full" />}</>
   );
 };
 
