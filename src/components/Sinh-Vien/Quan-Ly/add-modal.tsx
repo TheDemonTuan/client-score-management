@@ -4,34 +4,43 @@ import { Button, Input, Popover, PopoverTrigger, PopoverContent, Select, SelectI
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { AddInstructorFormValidate, AddInstructorFormValidateSchema } from "./add.validate";
+import { AddStudentFormValidate, AddStudentFormValidateSchema } from "./add.validate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/cn";
-import { InstructorCreateParams, InstructorReponse, instructorCreate } from "@/api/instructors";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "@/components/ui/calendar";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
-import CrudModal from "../crud-modal";
+import CrudModal from "../../crud-modal";
+import { StudentCreateParams, StudentResponse, studentCreate } from "@/api/students";
 
-const AddInstructorModal = () => {
+const currentYear = new Date().getFullYear();
+const lastTwoDigits = currentYear % 100;
+const AddStudentModal = () => {
   const queryClient = useQueryClient();
 
   const { modalClose } = useModalStore();
 
-  const addForm = useForm<AddInstructorFormValidate>({
-    resolver: zodResolver(AddInstructorFormValidateSchema),
+  const addForm = useForm<AddStudentFormValidate>({
+    resolver: zodResolver(AddStudentFormValidateSchema),
+    defaultValues: {
+      first_name: "",
+      last_name: "",
+      email: "",
+      address: "",
+      phone: "",
+    },
   });
 
   const { mutate: addMutate, isPending: addIsPending } = useMutation<
-    ApiSuccessResponse<InstructorReponse>,
+    ApiSuccessResponse<StudentResponse>,
     ApiErrorResponse,
-    InstructorCreateParams
+    StudentCreateParams
   >({
-    mutationFn: async (params) => await instructorCreate(params),
+    mutationFn: async (params) => await studentCreate(params),
     onSuccess: (res) => {
-      toast.success("Thêm giảng viên mới thành công !");
-      queryClient.setQueryData(["instructors"], (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
+      toast.success("Thêm sinh viên mới thành công !");
+      queryClient.setQueryData(["students"], (oldData: ApiSuccessResponse<StudentResponse[]>) =>
         oldData
           ? {
               ...oldData,
@@ -47,7 +56,7 @@ const AddInstructorModal = () => {
                 department.id === res.data.department_id
                   ? {
                       ...department,
-                      instructors: [...department.instructors, res.data],
+                      students: [...department.students, res.data],
                     }
                   : department
               ),
@@ -58,7 +67,7 @@ const AddInstructorModal = () => {
       addForm.reset();
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Thêm giảng viên thất bại!");
+      toast.error(error?.response?.data?.message || "Thêm sinh viên thất bại!");
     },
   });
 
@@ -73,23 +82,23 @@ const AddInstructorModal = () => {
   });
 
   const handleSubmit = () => {
-    addForm.handleSubmit((data: AddInstructorFormValidate) => {
+    addForm.handleSubmit((data: AddStudentFormValidate) => {
       addMutate({
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
         address: data.address,
         birth_day: data.birth_day,
-        degree: data.degree,
         phone: data.phone,
         gender: data.gender === "nu",
+        academic_year: parseInt(data.academic_year) % 100,
         department_id: parseInt(data.department_id),
       });
     })();
   };
 
   return (
-    <CrudModal title="Thêm giảng viên" btnText="Thêm" isPending={addIsPending} handleSubmit={handleSubmit}>
+    <CrudModal title="Thêm sinh viên" btnText="Thêm" isPending={addIsPending} handleSubmit={handleSubmit}>
       <Form {...addForm}>
         <form method="post" className="space-y-4">
           <div className="grid grid-flow-col gap-2">
@@ -264,19 +273,23 @@ const AddInstructorModal = () => {
           />
           <FormField
             control={addForm.control}
-            name="degree"
+            name="academic_year"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input
-                    isInvalid={!!addForm.formState.errors.degree}
+                  <Select
+                    isInvalid={!!addForm.formState.errors.academic_year}
                     isRequired
-                    placeholder="Master"
-                    label="Bằng cấp"
                     variant="faded"
-                    onClear={() => addForm.resetField("degree")}
-                    {...field}
-                  />
+                    disabledKeys={[field.value]}
+                    label="Chọn khoá học"
+                    onChange={field.onChange}
+                    selectedKeys={[field.value]}>
+                    {[...Array(lastTwoDigits)].map((_, index) => {
+                      const year = 2000 + index + 1;
+                      return <SelectItem key={year}>{year + ""}</SelectItem>;
+                    })}
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -297,6 +310,7 @@ const AddInstructorModal = () => {
                     disabledKeys={[field.value]}
                     label="Chọn khoa"
                     items={departmentsData ?? []}
+                    selectedKeys={[field.value]}
                     {...field}>
                     {(item) => (
                       <SelectItem key={item.id} className="capitalize">
@@ -315,4 +329,4 @@ const AddInstructorModal = () => {
   );
 };
 
-export default AddInstructorModal;
+export default AddStudentModal;

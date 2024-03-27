@@ -41,7 +41,7 @@ export const MenuData = [
       },
       {
         title: "Phân công môn học",
-        link: "/dang-ky",
+        link: "/phan-cong-mon-hoc",
         icon: GiArchiveRegister,
       },
     ],

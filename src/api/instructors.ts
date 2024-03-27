@@ -1,6 +1,7 @@
 import http, { ApiSuccessResponse } from "@/lib/http";
 import { ClassResponse } from "./classes";
 import { preloadTransform, selectTransform } from "@/lib/query-transform";
+import { AssignmentResponse } from "./assignment";
 
 export interface InstructorReponse {
   id: string;
@@ -15,7 +16,7 @@ export interface InstructorReponse {
   department_id: number;
   classes: ClassResponse[];
   grades: any[];
-  assignments: any[];
+  assignments: AssignmentResponse[];
 }
 
 //----------------------------------------------GET ALL----------------------------------------------

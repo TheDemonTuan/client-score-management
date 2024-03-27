@@ -79,6 +79,7 @@ export default function MonHocPage() {
   const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({});
+  const [departmentFilter, setDepartmentFilter] = React.useState<any>("all");
 
   const [page, setPage] = useState(1);
 
@@ -119,8 +120,14 @@ export default function MonHocPage() {
       );
     }
 
+    if (departmentFilter !== "all" && Array.from(departmentFilter).length !== departmentsQuery.data.length) {
+      filteredSubjects = filteredSubjects.filter((subject) =>
+        Array.from(departmentFilter).includes(subject.department_id + "")
+      );
+    }
+
     return filteredSubjects;
-  }, [subjectsQuery.data, hasSearchFilter, filterValue]);
+  }, [subjectsQuery.data, hasSearchFilter, departmentFilter, departmentsQuery.data.length, filterValue]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -271,16 +278,36 @@ export default function MonHocPage() {
             isDisabled={subjectsQuery.isPending}
             className="w-full sm:max-w-[40%]"
             placeholder="Tìm kiếm theo tên môn học..."
-            variant="bordered"
-            startContent={<IoSearchOutline />}
+            variant="underlined"
+            startContent={<IoSearchOutline size={24} />}
             value={filterValue}
             onClear={() => onClear()}
             onValueChange={onSearchChange}
           />
-          <div className="grid grid-flow-col gap-2 justify-between">
+          <div className="grid grid-cols-2 md:grid-flow-col gap-2 justify-between">
+            <Dropdown className="col-span-1">
+              <DropdownTrigger className="hidden sm:flex">
+                <Button endContent={<RiArrowDownSLine className="text-small" />} variant="ghost">
+                  Lọc theo khoa
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                // disallowEmptySelection
+                aria-label="Table Columns"
+                closeOnSelect={false}
+                selectedKeys={departmentFilter}
+                selectionMode="multiple"
+                onSelectionChange={setDepartmentFilter}>
+                {departmentsQuery.data.map((department) => (
+                  <DropdownItem key={department.id} className="capitalize">
+                    {capitalize(department.name)}
+                  </DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
             <Dropdown className="col-span-1 text-sm md:text-base">
               <DropdownTrigger className="hidden sm:flex">
-                <Button endContent={<RiArrowDownSLine className="text-small" />} variant="faded">
+                <Button endContent={<RiArrowDownSLine className="text-small" />} variant="ghost">
                   Hiển thị
                 </Button>
               </DropdownTrigger>
@@ -301,8 +328,8 @@ export default function MonHocPage() {
             <Button
               onPress={() => modalOpen(addSubjectModalKey)}
               color="secondary"
-              variant="solid"
-              className="text-sm md:text-base col-span-3 sm:col-span-1"
+              variant="shadow"
+              className="text-sm md:text-base col-span-full lg:col-span-1"
               endContent={<FaPlus />}
               isLoading={subjectsQuery.isPending}>
               Thêm môn học mới
@@ -318,7 +345,7 @@ export default function MonHocPage() {
             defaultSelectedKeys={rowsPerPage.toString()}
             size="sm"
             labelPlacement="outside-left"
-            variant="faded"
+            variant="bordered"
             className="max-w-28 sm:max-w-32"
             onChange={onRowsPerPageChange}>
             <SelectItem key={5} value="5">
@@ -342,6 +369,8 @@ export default function MonHocPage() {
     subjectsQuery.data.length,
     filterValue,
     onSearchChange,
+    departmentFilter,
+    departmentsQuery.data,
     visibleColumns,
     rowsPerPage,
     onRowsPerPageChange,

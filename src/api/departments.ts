@@ -3,13 +3,14 @@ import { ClassResponse } from "./classes";
 import { InstructorReponse } from "./instructors";
 import { SubjectResponse } from "./subjects";
 import { preloadTransform, selectTransform } from "@/lib/query-transform";
+import { StudentResponse } from "./students";
 
 export interface DepartmentResponse {
   id: number;
   symbol: string;
   name: string;
   classes: ClassResponse[];
-  students: any[];
+  students: StudentResponse[];
   instructors: InstructorReponse[];
   subjects: SubjectResponse[];
 }

@@ -1,53 +1,87 @@
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useModalStore } from "@/stores/modal-store";
-import { Button, Input, Popover, PopoverTrigger, PopoverContent, Select, SelectItem } from "@nextui-org/react";
+import {
+  Button,
+  Input,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Select,
+  SelectItem,
+  Autocomplete,
+  AutocompleteItem,
+} from "@nextui-org/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { useShallow } from "zustand/react/shallow";
+import { AddInstructorFormValidate, AddInstructorFormValidateSchema } from "./add.validate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/cn";
-import { EditInstructorFormValidate, EditInstructorFormValidateSchema } from "./edit.validate";
-import { InstructorReponse, InstructorUpdateByIdParams, instructorUpdateById } from "@/api/instructors";
+import { InstructorCreateParams, InstructorReponse, instructorCreate } from "@/api/instructors";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "@/components/ui/calendar";
-import { DepartmentResponse, departmentGetAll, departmentGetById } from "@/api/departments";
-import CrudModal from "../crud-modal";
+import { DepartmentResponse, departmentGetAll } from "@/api/departments";
+import CrudModal from "../../crud-modal";
 
-const modal_key = "edit_instructor";
-
-const EditInstructorModal = () => {
+const AddInstructorModal = () => {
   const queryClient = useQueryClient();
 
-  const { modalClose, modalData } = useModalStore(
-    useShallow((state) => ({
-      modalClose: state.modalClose,
-      modalData: state.modalData as InstructorReponse,
-    }))
-  );
+  const { modalClose } = useModalStore();
 
-  const editForm = useForm<EditInstructorFormValidate>({
-    resolver: zodResolver(EditInstructorFormValidateSchema),
-    values: {
-      first_name: modalData?.first_name,
-      last_name: modalData?.last_name,
-      email: modalData?.email,
-      address: modalData?.address,
-      birth_day: modalData?.birth_day,
-      degree: modalData?.degree,
-      phone: modalData?.phone,
-      gender: modalData.gender ? "nu" : "nam",
-      department_id: modalData.department_id + "",
+  const addForm = useForm<AddInstructorFormValidate>({
+    resolver: zodResolver(AddInstructorFormValidateSchema),
+    defaultValues: {
+      first_name: "",
+      last_name: "",
+      email: "",
+      address: "",
+      degree: "",
+      phone: "",
+      department_id: "",
     },
   });
 
-  useEffect(() => {
-    editForm.setValue("birth_day", new Date(modalData.birth_day));
-  }, [editForm, modalData]);
+  const { mutate: addMutate, isPending: addIsPending } = useMutation<
+    ApiSuccessResponse<InstructorReponse>,
+    ApiErrorResponse,
+    InstructorCreateParams
+  >({
+    mutationFn: async (params) => await instructorCreate(params),
+    onSuccess: (res) => {
+      toast.success("Thêm giảng viên mới thành công !");
+      queryClient.setQueryData(["instructors"], (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
+        oldData
+          ? {
+              ...oldData,
+              data: [...oldData.data, res.data],
+            }
+          : oldData
+      );
+      queryClient.setQueryData(["departments"], (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
+        oldData
+          ? {
+              ...oldData,
+              data: oldData.data.map((department) =>
+                department.id === res.data.department_id
+                  ? {
+                      ...department,
+                      instructors: [...department.instructors, res.data],
+                    }
+                  : department
+              ),
+            }
+          : oldData
+      );
+      modalClose();
+      addForm.reset();
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.message || "Thêm giảng viên thất bại!");
+    },
+  });
 
-  const { data: departmentData, isPending: departmentIsPending } = useQuery<
+  const { data: departmentsData, isPending: departmentsIsPending } = useQuery<
     ApiSuccessResponse<DepartmentResponse[]>,
     ApiErrorResponse,
     DepartmentResponse[]
@@ -57,51 +91,9 @@ const EditInstructorModal = () => {
     select: (res) => res?.data,
   });
 
-  const { mutate: editMutate, isPending: editIsPending } = useMutation<
-    ApiSuccessResponse<InstructorReponse>,
-    ApiErrorResponse,
-    InstructorUpdateByIdParams
-  >({
-    mutationFn: async (params) => await instructorUpdateById(params),
-    onSuccess: (res) => {
-      toast.success("Cập nhật giảng viên thành công !");
-      queryClient.setQueryData(["instructors"], (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
-        oldData
-          ? {
-              ...oldData,
-              data: oldData.data.map((item) => (item.id === res.data.id ? res.data : item)),
-            }
-          : oldData
-      );
-
-      queryClient.setQueryData(["departments"], (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
-        oldData
-          ? {
-              ...oldData,
-              data: oldData.data.map((department) =>
-                department.id === res.data.department_id
-                  ? {
-                      ...department,
-                      instructors: department.instructors.map((instructor) =>
-                        instructor.id === res.data.id ? res.data : instructor
-                      ),
-                    }
-                  : department
-              ),
-            }
-          : oldData
-      );
-      modalClose();
-    },
-    onError: (error) => {
-      toast.error(error?.response?.data?.message || "Cập nhật giảng viên thất bại!");
-    },
-  });
-
   const handleSubmit = () => {
-    editForm.handleSubmit((data: EditInstructorFormValidate) => {
-      editMutate({
-        id: modalData?.id,
+    addForm.handleSubmit((data: AddInstructorFormValidate) => {
+      addMutate({
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
@@ -110,100 +102,101 @@ const EditInstructorModal = () => {
         degree: data.degree,
         phone: data.phone,
         gender: data.gender === "nu",
+        department_id: parseInt(data.department_id),
       });
     })();
   };
 
   return (
-    <CrudModal title="Chỉnh sửa giảng viên" btnText="Cập nhật" isPending={editIsPending} handleSubmit={handleSubmit}>
-      <Form {...editForm}>
+    <CrudModal title="Thêm giảng viên" btnText="Thêm" isPending={addIsPending} handleSubmit={handleSubmit}>
+      <Form {...addForm}>
         <form method="post" className="space-y-4">
           <div className="grid grid-flow-col gap-2">
             <FormField
-              control={editForm.control}
+              control={addForm.control}
               name="first_name"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input
-                      isInvalid={!!editForm.formState.errors.first_name}
+                      isInvalid={!!addForm.formState.errors.first_name}
                       isRequired
-                      placeholder={modalData?.first_name}
+                      placeholder="John"
                       label="Họ"
-                      variant="faded"
-                      onClear={() => editForm.setValue("first_name", "")}
+                      variant="bordered"
+                      errorMessage={addForm.formState.errors.first_name?.message}
+                      onClear={() => addForm.resetField("first_name")}
                       {...field}
                       autoFocus
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
-              control={editForm.control}
+              control={addForm.control}
               name="last_name"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input
-                      isInvalid={!!editForm.formState.errors.last_name}
+                      isInvalid={!!addForm.formState.errors.last_name}
                       isRequired
-                      placeholder={modalData?.last_name}
+                      placeholder="Wich"
                       label="Tên"
-                      variant="faded"
-                      onClear={() => editForm.setValue("last_name", "")}
+                      variant="bordered"
+                      errorMessage={addForm.formState.errors.last_name?.message}
+                      onClear={() => addForm.resetField("last_name")}
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
           <FormField
-            control={editForm.control}
+            control={addForm.control}
             name="email"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <Input
-                    isInvalid={!!editForm.formState.errors.email}
+                    isInvalid={!!addForm.formState.errors.email}
                     isRequired
-                    placeholder={modalData?.email}
+                    placeholder="john.wick@gmail.com"
                     label="Email"
-                    variant="faded"
-                    onClear={() => editForm.setValue("email", "")}
+                    variant="bordered"
+                    errorMessage={addForm.formState.errors.email?.message}
+                    onClear={() => addForm.resetField("email")}
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
           <FormField
-            control={editForm.control}
+            control={addForm.control}
             name="address"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <Input
-                    isInvalid={!!editForm.formState.errors.address}
+                    isInvalid={!!addForm.formState.errors.address}
                     isRequired
-                    placeholder={modalData?.address}
+                    placeholder="New York"
                     label="Địa chỉ"
-                    variant="faded"
-                    onClear={() => editForm.setValue("address", "")}
+                    variant="bordered"
+                    errorMessage={addForm.formState.errors.address?.message}
+                    onClear={() => addForm.resetField("address")}
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
           <div className="grid grid-flow-row lg:grid-flow-col items-center gap-2">
             <FormField
-              control={editForm.control}
+              control={addForm.control}
               name="birth_day"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
@@ -214,17 +207,13 @@ const EditInstructorModal = () => {
                           <Button
                             size="lg"
                             about="Chọn ngày sinh"
-                            variant="faded"
+                            variant="bordered"
                             className={cn(
                               "pl-3 text-left font-normal",
                               !field.value && "text-muted-foreground",
-                              !!editForm.formState.errors.birth_day && "border-danger text-danger"
+                              !!addForm.formState.errors.birth_day && "border-danger text-danger"
                             )}>
-                            {field.value ? (
-                              <span>{new Date(field.value).toDateString()}</span>
-                            ) : (
-                              <span>Chọn ngày sinh</span>
-                            )}
+                            {field.value ? field.value.toDateString() : <span>Chọn ngày sinh</span>}
                             <CalendarIcon className="ml-auto h-5 w-5 opacity-50" />
                           </Button>
                         </FormControl>
@@ -245,20 +234,20 @@ const EditInstructorModal = () => {
               )}
             />
             <FormField
-              control={editForm.control}
+              control={addForm.control}
               name="gender"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Select
-                      isInvalid={!!editForm.formState.errors.gender}
+                      isInvalid={!!addForm.formState.errors.gender}
                       isRequired
-                      variant="faded"
+                      variant="bordered"
                       radius="lg"
                       label="Giới tính"
                       placeholder="Chọn giới tính"
+                      errorMessage={addForm.formState.errors.gender?.message}
                       size="sm"
-                      defaultSelectedKeys={[modalData?.gender ? "nu" : "nam"]}
                       {...field}>
                       <SelectItem key="nam" value="nam">
                         Nam
@@ -268,73 +257,81 @@ const EditInstructorModal = () => {
                       </SelectItem>
                     </Select>
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
           <FormField
-            control={editForm.control}
+            control={addForm.control}
             name="phone"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <Input
-                    isInvalid={!!editForm.formState.errors.phone}
+                    isInvalid={!!addForm.formState.errors.phone}
                     isRequired
-                    placeholder={modalData?.phone}
+                    placeholder="0123456789"
                     label="Số điện thoại"
-                    variant="faded"
-                    onClear={() => editForm.setValue("phone", "")}
+                    variant="bordered"
+                    errorMessage={addForm.formState.errors.phone?.message}
+                    onClear={() => addForm.resetField("phone")}
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
           <FormField
-            control={editForm.control}
+            control={addForm.control}
             name="degree"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <Input
-                    isInvalid={!!editForm.formState.errors.degree}
+                    isInvalid={!!addForm.formState.errors.degree}
                     isRequired
-                    placeholder={modalData?.degree}
+                    placeholder="Master"
                     label="Bằng cấp"
-                    variant="faded"
-                    onClear={() => editForm.setValue("degree", "")}
+                    variant="bordered"
+                    errorMessage={addForm.formState.errors.degree?.message}
+                    onClear={() => addForm.resetField("degree")}
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
           <FormField
-            control={editForm.control}
+            control={addForm.control}
             name="department_id"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Select
-                    isInvalid={!!editForm.formState.errors.department_id}
-                    isRequired
-                    variant="faded"
-                    isLoading={departmentIsPending}
-                    defaultSelectedKeys={[field.value]}
-                    selectedKeys={[field.value]}
+                  <Autocomplete
+                    items={departmentsData ?? []}
+                    aria-label="Chọn khoa"
+                    placeholder="Nhập tên khoa"
+                    label="Chọn khoa phân công"
+                    radius="lg"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.department_id?.message}
+                    selectedKey={field.value}
+                    onSelectionChange={field.onChange}
                     disabledKeys={[field.value]}
-                    label="Khoa"
+                    isInvalid={!!addForm.formState.errors.department_id}
+                    isRequired
+                    isLoading={departmentsIsPending}
+                    isDisabled={departmentsIsPending}
+                    allowsCustomValue
                     {...field}>
-                    <SelectItem key={modalData?.department_id} className="capitalize">
-                      {departmentData?.find((department) => department.id === modalData?.department_id)?.name}
-                    </SelectItem>
-                  </Select>
+                    {(item) => (
+                      <AutocompleteItem key={item.id} textValue={item.name} className="capitalize">
+                        {item.name}
+                      </AutocompleteItem>
+                    )}
+                  </Autocomplete>
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -344,4 +341,4 @@ const EditInstructorModal = () => {
   );
 };
 
-export default EditInstructorModal;
+export default AddInstructorModal;

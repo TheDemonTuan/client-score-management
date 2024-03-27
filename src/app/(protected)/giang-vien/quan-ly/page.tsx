@@ -51,8 +51,10 @@ import {
   addInstructorModalKey,
   deleteInstructorModalKey,
   editInstructorModalKey,
-} from "@/components/Giang-Vien/modal";
+} from "@/components/Giang-Vien/Quan-Ly/modal";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { AssignmentResponse } from "@/api/assignment";
+import { EditInstructorModalData } from "@/components/Giang-Vien/Quan-Ly/edit-modal";
 
 const columns = [
   { name: "Mã giảng viên", uid: "id", sortable: true },
@@ -147,6 +149,7 @@ export default function GiangVienQuanLyPage() {
   const renderCell = useCallback(
     (instructor: InstructorReponse, columnKey: Key) => {
       const cellValue = instructor[columnKey as keyof InstructorReponse];
+      const currDepartment = departmentsQuery.data.find((department) => department.id === instructor.department_id);
 
       switch (columnKey) {
         case "full_name":
@@ -155,7 +158,7 @@ export default function GiangVienQuanLyPage() {
           return `${!instructor.gender ? "Nam" : "Nữ"}`;
         case "department_id":
           return `
-              ${departmentsQuery.data.find((department) => department.id === instructor.department_id)?.name}`;
+              ${currDepartment?.name}`;
         case "classes":
           return (
             <div className="relative flex justify-center items-center gap-2">
@@ -198,7 +201,7 @@ export default function GiangVienQuanLyPage() {
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
-                  setModalData<PreviewRelatedModalData<ClassResponse>>({
+                  setModalData<PreviewRelatedModalData<AssignmentResponse>>({
                     data: instructor?.assignments ?? [],
                     columns: PreviewRelatedAssignmentColumns,
                   });
@@ -223,7 +226,10 @@ export default function GiangVienQuanLyPage() {
                       <FaRegEdit className="text-lg lg:text-xl text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400" />
                     }
                     onClick={() => {
-                      setModalData(instructor);
+                      setModalData<EditInstructorModalData>({
+                        instructor,
+                        department: currDepartment,
+                      });
                       modalOpen(editInstructorModalKey);
                     }}>
                     Chỉnh sửa

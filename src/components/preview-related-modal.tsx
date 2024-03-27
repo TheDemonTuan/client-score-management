@@ -72,6 +72,8 @@ export const PreviewRelatedStudentColumns = [
   { name: "Địa chỉ", uid: "address" },
   { name: "Số điện thoại", uid: "phone" },
   { name: "Giới tính", uid: "gender" },
+  { name: "Khoá học", uid: "academic_year" },
+  { name: "Mã Khoa", uid: "department_id" },
   { name: "Mã lớp", uid: "class_id" },
 ];
 

@@ -34,44 +34,53 @@ import { MdOutlineDelete } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
 import PreviewRelatedModal, {
   PreviewRelatedAssignmentColumns,
-  PreviewRelatedClassColumns,
   PreviewRelatedGradeColumns,
   PreviewRelatedModalData,
   previewRelatedModalKey,
 } from "@/components/preview-related-modal";
 import { useModalStore } from "@/stores/modal-store";
-import { InstructorReponse, instructorGetAll } from "@/api/instructors";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
-import { ClassResponse } from "@/api/classes";
-import {
-  AddInstructorModal,
-  DeleteInstructorModal,
-  EditInstructorModal,
-  addInstructorModalKey,
-  deleteInstructorModalKey,
-  editInstructorModalKey,
-} from "@/components/Giang-Vien/modal";
+import { ClassResponse, classGetAll } from "@/api/classes";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { StudentResponse, studentGetAll } from "@/api/students";
+import {
+  AddStudentModal,
+  DeleteStudentModal,
+  EditStudentModal,
+  addStudentModalKey,
+  deleteStudentModalKey,
+  editStudentModalKey,
+} from "@/components/Sinh-Vien/Quan-Ly/modal";
 
 const columns = [
-  { name: "Mã giảng viên", uid: "id", sortable: true },
-  { name: "Họ giảng viên", uid: "first_name", sortable: true },
-  { name: "Tên giảng viên", uid: "last_name", sortable: true },
-  { name: "Họ tên giảng viên", uid: "full_name", sortable: true },
+  { name: "Mã", uid: "id", sortable: true },
+  { name: "Họ", uid: "first_name", sortable: true },
+  { name: "Tên", uid: "last_name", sortable: true },
+  { name: "Họ và tên", uid: "full_name", sortable: true },
   { name: "Email", uid: "email", sortable: true },
   { name: "Địa chỉ", uid: "address", sortable: true },
   { name: "Ngày sinh", uid: "birth_day", sortable: true },
   { name: "Số điện thoại", uid: "phone", sortable: true },
   { name: "Giới tính", uid: "gender", sortable: true },
-  { name: "Trình độ", uid: "degree", sortable: true },
+  { name: "Khoá học", uid: "academic_year", sortable: true },
   { name: "Thuộc khoa", uid: "department_id", sortable: true },
-  { name: "Số lượng lớp quản lý", uid: "classes", sortable: true },
-  { name: "Số lượng môn học được phân công", uid: "assignments", sortable: true },
-  { name: "Số lượng điểm đã chấm", uid: "grades", sortable: true },
+  { name: "Lớp", uid: "class_id", sortable: true },
+  { name: "Số lượng điểm", uid: "grades", sortable: true },
+  { name: "Số lượng môn học đã đăng ký", uid: "registrations", sortable: true },
   { name: "Hành động", uid: "actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["id", "full_name", "email", "phone", "gender", "department_id", "actions"];
+const INITIAL_VISIBLE_COLUMNS = [
+  "id",
+  "full_name",
+  "email",
+  "phone",
+  "gender",
+  "department_id",
+  "class_id",
+  "academic_year",
+  "actions",
+];
 
 export default function SinhVienQuanLyPage() {
   const [filterValue, setFilterValue] = useState("");
@@ -91,7 +100,7 @@ export default function SinhVienQuanLyPage() {
   }, [visibleColumns]);
 
   //My Logic
-  const [departmentsQuery, instructorsQuery] = useSuspenseQueries({
+  const [departmentsQuery, classesQuery, instructorsQuery] = useSuspenseQueries({
     queries: [
       {
         queryKey: ["departments"],
@@ -99,9 +108,14 @@ export default function SinhVienQuanLyPage() {
         select: (res: ApiSuccessResponse<DepartmentResponse[]>) => res?.data,
       },
       {
-        queryKey: ["instructors"],
-        queryFn: async () => await instructorGetAll(),
-        select: (res: ApiSuccessResponse<InstructorReponse[]>) => res?.data,
+        queryKey: ["classes"],
+        queryFn: async () => await classGetAll(),
+        select: (res: ApiSuccessResponse<ClassResponse[]>) => res?.data,
+      },
+      {
+        queryKey: ["students"],
+        queryFn: async () => await studentGetAll(),
+        select: (res: ApiSuccessResponse<StudentResponse[]>) => res?.data,
       },
     ],
   });
@@ -134,9 +148,9 @@ export default function SinhVienQuanLyPage() {
   }, [page, filteredItems, rowsPerPage]);
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a: InstructorReponse, b: InstructorReponse) => {
-      const first = a[sortDescriptor.column as keyof InstructorReponse] as string;
-      const second = b[sortDescriptor.column as keyof InstructorReponse] as string;
+    return [...items].sort((a: StudentResponse, b: StudentResponse) => {
+      const first = a[sortDescriptor.column as keyof StudentResponse] as string;
+      const second = b[sortDescriptor.column as keyof StudentResponse] as string;
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
@@ -144,44 +158,32 @@ export default function SinhVienQuanLyPage() {
   }, [sortDescriptor, items]);
 
   const renderCell = useCallback(
-    (instructor: InstructorReponse, columnKey: Key) => {
-      const cellValue = instructor[columnKey as keyof InstructorReponse];
+    (student: StudentResponse, columnKey: Key) => {
+      const cellValue = student[columnKey as keyof StudentResponse];
 
       switch (columnKey) {
         case "full_name":
-          return `${instructor.first_name} ${instructor.last_name}`;
+          return `${student.first_name} ${student.last_name}`;
+        case "academic_year":
+          return `${2000 + student.academic_year}`;
         case "gender":
-          return `${!instructor.gender ? "Nam" : "Nữ"}`;
+          return `${!student.gender ? "Nam" : "Nữ"}`;
         case "department_id":
           return `
-              ${departmentsQuery.data.find((department) => department.id === instructor.department_id)?.name}`;
-        case "classes":
-          return (
-            <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{instructor?.classes?.length ?? 0}</p>
-              <AiOutlineFundView
-                className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
-                size={24}
-                onClick={() => {
-                  setModalData<PreviewRelatedModalData<ClassResponse>>({
-                    data: instructor?.classes ?? [],
-                    columns: PreviewRelatedClassColumns,
-                  });
-                  modalOpen(previewRelatedModalKey);
-                }}
-              />
-            </div>
-          );
+              ${departmentsQuery.data.find((department) => department.id === student.department_id)?.name}`;
+        case "class_id":
+          return `
+              ${classesQuery.data.find((classs) => classs.id === student.class_id)?.name ?? "Chưa có"}`;
         case "grades":
           return (
             <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{instructor?.grades?.length ?? 0}</p>
+              <p className="font-medium text-base">{student?.grades?.length ?? 0}</p>
               <AiOutlineFundView
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
                   setModalData<PreviewRelatedModalData<ClassResponse>>({
-                    data: instructor?.grades ?? [],
+                    data: student?.grades ?? [],
                     columns: PreviewRelatedGradeColumns,
                   });
                   modalOpen(previewRelatedModalKey);
@@ -189,16 +191,16 @@ export default function SinhVienQuanLyPage() {
               />
             </div>
           );
-        case "assignments":
+        case "registrations":
           return (
             <div className="relative flex justify-center items-center gap-2">
-              <p className="font-medium text-base">{instructor?.assignments?.length ?? 0}</p>
+              <p className="font-medium text-base">{student?.registrations?.length ?? 0}</p>
               <AiOutlineFundView
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
                   setModalData<PreviewRelatedModalData<ClassResponse>>({
-                    data: instructor?.assignments ?? [],
+                    data: student?.registrations ?? [],
                     columns: PreviewRelatedAssignmentColumns,
                   });
                   modalOpen(previewRelatedModalKey);
@@ -222,8 +224,8 @@ export default function SinhVienQuanLyPage() {
                       <FaRegEdit className="text-lg lg:text-xl text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400" />
                     }
                     onClick={() => {
-                      setModalData(instructor);
-                      modalOpen(editInstructorModalKey);
+                      setModalData(student);
+                      modalOpen(editStudentModalKey);
                     }}>
                     Chỉnh sửa
                   </DropdownItem>
@@ -233,8 +235,8 @@ export default function SinhVienQuanLyPage() {
                       <MdOutlineDelete className="text-xl lg:text-2xl text-danger cursor-pointer active:opacity-50 hover:text-gray-400" />
                     }
                     onClick={() => {
-                      setModalData(instructor);
-                      modalOpen(deleteInstructorModalKey);
+                      setModalData(student);
+                      modalOpen(deleteStudentModalKey);
                     }}>
                     Xoá
                   </DropdownItem>
@@ -246,7 +248,7 @@ export default function SinhVienQuanLyPage() {
           return cellValue;
       }
     },
-    [departmentsQuery.data, setModalData, modalOpen]
+    [departmentsQuery.data, classesQuery.data, setModalData, modalOpen]
   );
 
   const onRowsPerPageChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
@@ -276,7 +278,7 @@ export default function SinhVienQuanLyPage() {
             isClearable
             isDisabled={instructorsQuery.isPending}
             className="w-full sm:max-w-[40%]"
-            placeholder="Tìm kiếm theo họ hoặc tên giảng viên..."
+            placeholder="Tìm kiếm theo họ hoặc tên sinh viên..."
             variant="underlined"
             startContent={<IoSearchOutline size={24} />}
             value={filterValue}
@@ -305,19 +307,19 @@ export default function SinhVienQuanLyPage() {
               </DropdownMenu>
             </Dropdown>
             <Button
-              onPress={() => modalOpen(addInstructorModalKey)}
+              onPress={() => modalOpen(addStudentModalKey)}
               color="secondary"
               variant="shadow"
               className="text-sm md:text-base col-span-2 sm:col-span-1"
               endContent={<FaPlus />}
               isLoading={instructorsQuery.isPending}>
-              Thêm giảng viên mới
+              Thêm sinh viên mới
             </Button>
           </div>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Có <span className="font-bold text-secondary">{instructorsQuery.data.length}</span> giảng viên
+            Có <span className="font-bold text-secondary">{instructorsQuery.data.length}</span> sinh viên
           </span>
           <Select
             label="Số dòng:"
@@ -372,14 +374,14 @@ export default function SinhVienQuanLyPage() {
         {selectedKeys === "all" && (
           <Button startContent={<MdOutlineDelete size={24} />} color="danger" variant="flat">
             <span>
-              <span className="font-bold">tất cả</span> các giảng viên
+              <span className="font-bold">tất cả</span> các sinh viên
             </span>
           </Button>
         )}
         {selectedKeys !== "all" && selectedKeys.size > 0 && (
           <Button startContent={<MdOutlineDelete size={24} />} color="danger" variant="flat">
             <span>
-              <span className="font-bold">{`${selectedKeys.size}/${filteredItems.length}`}</span> giảng viên đã chọn
+              <span className="font-bold">{`${selectedKeys.size}/${filteredItems.length}`}</span> sinh viên đã chọn
             </span>
           </Button>
         )}
@@ -417,7 +419,7 @@ export default function SinhVienQuanLyPage() {
               )}
             </TableHeader>
             <TableBody
-              emptyContent={"Không tìm thấy giảng viên nào"}
+              emptyContent={"Không tìm thấy sinh viên nào"}
               loadingContent={<Spinner label="Loading..." color="secondary" size="md" />}
               isLoading={instructorsQuery.isPending}
               items={sortedItems}>
@@ -431,9 +433,9 @@ export default function SinhVienQuanLyPage() {
         </CardBody>
       </Card>
       {modelKey === previewRelatedModalKey && <PreviewRelatedModal key={previewRelatedModalKey} />}
-      {modelKey === addInstructorModalKey && <AddInstructorModal key={addInstructorModalKey} />}
-      {modelKey === editInstructorModalKey && <EditInstructorModal key={editInstructorModalKey} />}
-      {modelKey === deleteInstructorModalKey && <DeleteInstructorModal key={deleteInstructorModalKey} />}
+      {modelKey === addStudentModalKey && <AddStudentModal key={addStudentModalKey} />}
+      {modelKey === editStudentModalKey && <EditStudentModal key={editStudentModalKey} />}
+      {modelKey === deleteStudentModalKey && <DeleteStudentModal key={deleteStudentModalKey} />}
     </>
   );
 }

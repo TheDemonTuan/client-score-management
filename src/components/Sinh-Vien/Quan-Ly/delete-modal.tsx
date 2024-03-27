@@ -3,33 +3,33 @@ import { useModalStore } from "@/stores/modal-store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
-import { InstructorDeleteByIdParams, InstructorReponse, instructorDeleteById } from "@/api/instructors";
 import { DepartmentResponse } from "@/api/departments";
-import CrudModal from "../crud-modal";
+import CrudModal from "../../crud-modal";
+import { StudentDeleteByIdParams, StudentResponse, studentDeleteById } from "@/api/students";
 
-const DeleteInstructorModal = () => {
+const DeleteStudentModal = () => {
   const queryClient = useQueryClient();
 
   const { modalClose, modalData } = useModalStore(
     useShallow((state) => ({
       modalClose: state.modalClose,
-      modalData: state.modalData as InstructorReponse,
+      modalData: state.modalData as StudentResponse,
     }))
   );
 
   const { mutate: deleteMutate, isPending: deleteIsPending } = useMutation<
     ApiSuccessResponse,
     ApiErrorResponse,
-    InstructorDeleteByIdParams
+    StudentDeleteByIdParams
   >({
-    mutationFn: async (params) => await instructorDeleteById(params),
+    mutationFn: async (params) => await studentDeleteById(params),
     onSuccess: () => {
-      toast.success(`Xoá giảng viên thành công !`);
-      queryClient.setQueryData(["instructors"], (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
+      toast.success(`Xoá sinh viên thành công !`);
+      queryClient.setQueryData(["students"], (oldData: ApiSuccessResponse<StudentResponse[]>) =>
         oldData
           ? {
               ...oldData,
-              data: oldData.data.filter((instructor) => instructor.id !== modalData?.id),
+              data: oldData.data.filter((student) => student.id !== modalData?.id),
             }
           : oldData
       );
@@ -41,7 +41,7 @@ const DeleteInstructorModal = () => {
                 department.id === modalData?.department_id
                   ? {
                       ...department,
-                      instructors: department.instructors.filter((instructor) => instructor.id !== modalData?.id),
+                      students: department.students.filter((student) => student.id !== modalData?.id),
                     }
                   : department
               ),
@@ -50,7 +50,7 @@ const DeleteInstructorModal = () => {
       );
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Xoá giảng viên thất bại!");
+      toast.error(error?.response?.data?.message || "Xoá sinh viên thất bại!");
     },
     onSettled: () => {
       modalClose();
@@ -62,9 +62,9 @@ const DeleteInstructorModal = () => {
   };
 
   return (
-    <CrudModal title="Xoá giảng khoa" btnText="Xoá" isPending={deleteIsPending} handleSubmit={handleSubmit}>
+    <CrudModal title="Xoá sinh viên" btnText="Xoá" isPending={deleteIsPending} handleSubmit={handleSubmit}>
       <p>
-        Bạn có đồng ý xoá giảng viên{" "}
+        Bạn có đồng ý xoá sinh viên{" "}
         <span className="font-bold">
           {modalData?.first_name} {modalData?.last_name}
         </span>
@@ -74,4 +74,5 @@ const DeleteInstructorModal = () => {
   );
 };
 
-export default DeleteInstructorModal;
+export default DeleteStudentModal;
+

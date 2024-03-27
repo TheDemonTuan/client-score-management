@@ -17,6 +17,11 @@ const AddDepartmentModal = () => {
 
   const addForm = useForm<AddDepartmentFormValidate>({
     resolver: zodResolver(AddDepartmentFormValidateSchema),
+    defaultValues: {
+      id: 0,
+      symbol: "",
+      name: "",
+    },
   });
 
   const { mutate: addMutate, isPending: addIsPending } = useMutation<
@@ -74,7 +79,7 @@ const AddDepartmentModal = () => {
                     {...field}
                     value={addForm.getValues("id") + ""}
                     onChange={(e) => {
-                      addForm.setValue("id", parseInt(e.target.value));
+                      addForm.setValue("id", e.target.value ? parseInt(e.target.value) : 0);
                     }}
                   />
                 </FormControl>

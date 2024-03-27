@@ -1,14 +1,6 @@
-import type { Metadata, ResolvingMetadata } from "next";
 import { IconBrandGithub, IconBrandGoogle, IconBrandOnlyfans } from "@tabler/icons-react";
 import GuestGuard from "@/guards/GuestGuard";
-import { headers } from "next/headers";
 
-export async function generateMetadata({}, parent: ResolvingMetadata): Promise<Metadata> {
-  const headersList = headers();
-  return {
-    title: headersList.get("x-pathname") === "/dang-nhap" ? "Đăng nhập" : "Đăng ký",
-  };
-}
 export default function AuthLayout({
   children,
 }: Readonly<{

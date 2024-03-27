@@ -1,4 +1,6 @@
 import http, { ApiSuccessResponse } from "@/lib/http";
+import { AssignmentResponse } from "./assignment";
+import { RegistrationResponse } from "./registration";
 
 export interface SubjectResponse {
   id: string;
@@ -9,8 +11,8 @@ export interface SubjectResponse {
   final_percentage: number;
   department_id: number;
   grades: any[];
-  instructor_assignments: any[];
-  student_registrations: any[];
+  instructor_assignments: AssignmentResponse[];
+  student_registrations: RegistrationResponse[];
 }
 
 //----------------------------------------------GET LIST----------------------------------------------
@@ -19,19 +21,16 @@ export const subjectGetAll = async () =>
 
 //----------------------------------------------CREATE----------------------------------------------
 export interface SubjectCreateParams
-  extends Omit<SubjectResponse, "id" | "grades" | "assignments"> {}
+  extends Omit<SubjectResponse, "id" | "grades" | "instructor_assignments" | "student_registrations"> {}
 
 export const subjectCreate = async (params: SubjectCreateParams) =>
   http.post<ApiSuccessResponse<SubjectResponse>>("subjects", params).then((res) => res.data);
 
 //----------------------------------------------UPDATE----------------------------------------------
-export interface SubjectUpdateByIdParams
-  extends Omit<SubjectResponse, "department_id" | "grades" | "assignments"> {}
+export interface SubjectUpdateByIdParams extends Omit<SubjectResponse, "department_id" | "grades" | "instructor_assignments" | "student_registrations"> {}
 
 export const subjectUpdateById = async (params: SubjectUpdateByIdParams) =>
-  http
-    .put<ApiSuccessResponse<SubjectResponse>>(`subjects/${params.id}`, params)
-    .then((res) => res.data);
+  http.put<ApiSuccessResponse<SubjectResponse>>(`subjects/${params.id}`, params).then((res) => res.data);
 
 //----------------------------------------------DELETE----------------------------------------------
 export interface SubjectDeleteByIdParams extends Pick<SubjectResponse, "id"> {}

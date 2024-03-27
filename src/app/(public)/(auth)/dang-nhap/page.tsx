@@ -2,6 +2,11 @@ import React from "react";
 import { Label } from "@/components/ui/v2/label";
 import Link from "next/link";
 import LoginForm from "@/components/Auth/Login/login-form";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Đăng nhập",
+};
 
 const DangNhapPage = () => {
   return (

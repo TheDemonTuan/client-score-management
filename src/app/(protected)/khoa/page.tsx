@@ -275,8 +275,8 @@ export default function KhoaPage() {
             isClearable
             className="w-full sm:max-w-[40%]"
             placeholder="Tìm kiếm theo tên khoa..."
-            variant="bordered"
-            startContent={<IoSearchOutline />}
+            variant="underlined"
+            startContent={<IoSearchOutline size={24} />}
             value={filterValue}
             onClear={() => onClear()}
             onValueChange={onSearchChange}
@@ -284,7 +284,7 @@ export default function KhoaPage() {
           <div className="grid grid-flow-col gap-2 justify-between">
             <Dropdown className="col-span-1 text-sm md:text-base">
               <DropdownTrigger className="hidden sm:flex">
-                <Button endContent={<RiArrowDownSLine className="text-small" />} variant="faded">
+                <Button endContent={<RiArrowDownSLine className="text-small" />} variant="ghost">
                   Hiển thị
                 </Button>
               </DropdownTrigger>
@@ -305,7 +305,7 @@ export default function KhoaPage() {
             <Button
               onPress={() => modalOpen(addDepartmentModalKey)}
               color="secondary"
-              variant="solid"
+              variant="shadow"
               className="text-sm md:text-base col-span-3 sm:col-span-1"
               endContent={<FaPlus />}
               isLoading={departmentsIsPending}>
@@ -322,7 +322,7 @@ export default function KhoaPage() {
             defaultSelectedKeys={rowsPerPage.toString()}
             size="sm"
             labelPlacement="outside-left"
-            variant="faded"
+            variant="bordered"
             className="max-w-24 sm:max-w-32"
             onChange={onRowsPerPageChange}>
             <SelectItem key={5} value="5">

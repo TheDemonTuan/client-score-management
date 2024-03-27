@@ -18,6 +18,13 @@ const AddSubjectModal = () => {
 
   const addForm = useForm<AddSubjectFormValidate>({
     resolver: zodResolver(AddSubjectFormValidateSchema),
+    defaultValues: {
+      name: "",
+      credits: 0,
+      process_percentage: 0,
+      midterm_percentage: 0,
+      final_percentage: 0,
+    },
   });
 
   const { mutate: addMutate, isPending: addIsPending } = useMutation<

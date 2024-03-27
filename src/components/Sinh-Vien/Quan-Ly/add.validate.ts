@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const EditInstructorFormValidateSchema = z.object({
+export const AddStudentFormValidateSchema = z.object({
   first_name: z
     .string({
       required_error: "Họ không được để trống.",
@@ -42,17 +42,6 @@ export const EditInstructorFormValidateSchema = z.object({
       message: "Địa chỉ không được dài hơn 100 ký tự.",
     })
     .trim(),
-  degree: z
-    .string({
-      required_error: "Bằng cấp không được để trống.",
-    })
-    .min(5, {
-      message: "Bằng cấp không được ngắn hơn 5 ký tự.",
-    })
-    .max(50, {
-      message: "Bằng cấp không được dài hơn 50 ký tự.",
-    })
-    .trim(),
   phone: z
     .string({
       required_error: "Số điện thoại không được để trống.",
@@ -69,13 +58,14 @@ export const EditInstructorFormValidateSchema = z.object({
       required_error: "Giới tính không được để trống.",
     })
     .trim(),
-  birth_day: z
-    .date({
-      required_error: "Ngày sinh không được để trống.",
+  birth_day: z.date({
+    required_error: "Ngày sinh không được để trống.",
+  }),
+  academic_year: z
+    .string({
+      required_error: "Khoá học không được để trống.",
     })
-    .max(new Date(), {
-      message: "Ngày sinh không được lớn hơn ngày hiện tại.",
-    }),
+    .trim(),
   department_id: z
     .string({
       required_error: "Khoa không được để trống.",
@@ -83,4 +73,4 @@ export const EditInstructorFormValidateSchema = z.object({
     .trim(),
 });
 
-export type EditInstructorFormValidate = z.infer<typeof EditInstructorFormValidateSchema>;
+export type AddStudentFormValidate = z.infer<typeof AddStudentFormValidateSchema>;

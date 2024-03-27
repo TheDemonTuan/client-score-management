@@ -21,7 +21,6 @@ import {
   Select,
   SelectItem,
   Card,
-  CardHeader,
   CardBody,
 } from "@nextui-org/react";
 import { capitalize } from "@/lib/capitalize";
@@ -35,37 +34,28 @@ import { FaRegEdit } from "react-icons/fa";
 import { useModalStore } from "@/stores/modal-store";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { RegistrationResponse, registrationGetAll } from "@/api/registration";
+import { AssignmentResponse, assignmentGetAll } from "@/api/assignment";
 import {
-  AddStudentRegistrationModal,
-  DeleteStudentRegistrationModal,
-  EditStudentRegistrationModal,
-  addStudentRegistrationModalKey,
-  deleteStudentRegistrationModalKey,
-  editStudentRegistrationModalKey,
-} from "@/components/Sinh-Vien/Dang-Ky-Mon-Hoc/modal";
+  AddInstructorAssignmentModal,
+  DeleteInstructorAssignmentModal,
+  EditInstructorAssignmentModal,
+  addInstructorAssignmentModalKey,
+  deleteInstructorAssignmentModalKey,
+  editInstructorAssignmentModalKey,
+} from "@/components/Giang-Vien/Phan-Cong-Mon-Hoc/modal";
 
 const columns = [
   { name: "Mã", uid: "id", sortable: true },
-  { name: "Họ và tên sinh viên", uid: "full_name", sortable: true },
-  { name: "Tên môn học đã đăng ký", uid: "subject_name", sortable: true },
+  { name: "Họ và tên giáo viên", uid: "full_name", sortable: true },
+  { name: "Tên môn học được phân công", uid: "subject_name", sortable: true },
   { name: "Thuộc khoa", uid: "department_id", sortable: true },
-  { name: "Ngày đăng ký", uid: "created_at", sortable: true },
-  { name: "Ngày cập nhật đăng ký", uid: "updated_at", sortable: true },
+  { name: "Ngày được phân công", uid: "created_at", sortable: true },
   { name: "Hành động", uid: "actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = [
-  "id",
-  "full_name",
-  "subject_name",
-  "department_id",
-  "created_at",
-  "updated_at",
-  "actions",
-];
+const INITIAL_VISIBLE_COLUMNS = ["id", "full_name", "subject_name", "department_id", "created_at", "actions"];
 
-export default function SinhVienDangKyMonHocPage() {
+export default function GiangVienPhanCongMonHocPage() {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
@@ -83,12 +73,12 @@ export default function SinhVienDangKyMonHocPage() {
   }, [visibleColumns]);
 
   //My Logic
-  const [registrationsQuery, departmentsQuery] = useSuspenseQueries({
+  const [assignmentsQuery, departmentsQuery] = useSuspenseQueries({
     queries: [
       {
-        queryKey: ["registrations"],
-        queryFn: async () => await registrationGetAll(),
-        select: (res: ApiSuccessResponse<RegistrationResponse[]>) => res?.data,
+        queryKey: ["assignments"],
+        queryFn: async () => await assignmentGetAll(),
+        select: (res: ApiSuccessResponse<AssignmentResponse[]>) => res?.data,
       },
       {
         queryKey: ["departments"],
@@ -103,16 +93,16 @@ export default function SinhVienDangKyMonHocPage() {
   //End My Logic
 
   const filteredItems = useMemo(() => {
-    let filteredAssignments = [...(registrationsQuery.data ?? [])];
+    let filteredAssignments = [...(assignmentsQuery.data ?? [])];
 
     if (hasSearchFilter) {
-      filteredAssignments = filteredAssignments.filter((registration) =>
-        registration.student_id.toLowerCase().includes(filterValue.toLowerCase())
+      filteredAssignments = filteredAssignments.filter((assignment) =>
+        assignment.instructor_id.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
 
     return filteredAssignments;
-  }, [registrationsQuery.data, hasSearchFilter, filterValue]);
+  }, [assignmentsQuery.data, hasSearchFilter, filterValue]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -124,9 +114,9 @@ export default function SinhVienDangKyMonHocPage() {
   }, [page, filteredItems, rowsPerPage]);
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a: RegistrationResponse, b: RegistrationResponse) => {
-      const first = a[sortDescriptor.column as keyof RegistrationResponse] as string;
-      const second = b[sortDescriptor.column as keyof RegistrationResponse] as string;
+    return [...items].sort((a: AssignmentResponse, b: AssignmentResponse) => {
+      const first = a[sortDescriptor.column as keyof AssignmentResponse] as string;
+      const second = b[sortDescriptor.column as keyof AssignmentResponse] as string;
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
@@ -134,26 +124,26 @@ export default function SinhVienDangKyMonHocPage() {
   }, [sortDescriptor, items]);
 
   const renderCell = useCallback(
-    (registration: RegistrationResponse, columnKey: Key) => {
-      const cellValue = registration[columnKey as keyof RegistrationResponse];
+    (assignment: AssignmentResponse, columnKey: Key) => {
+      const cellValue = assignment[columnKey as keyof AssignmentResponse];
 
       const currDepartment = departmentsQuery.data.find((department) =>
-        department.subjects.find((subject) => subject.id === registration.subject_id)
+        department.subjects.find((subject) => subject.id === assignment.subject_id)
       );
-      const currStudent = currDepartment?.students.find((student) => student.id === registration.student_id);
-      const currSubject = currDepartment?.subjects.find((subject) => subject.id === registration.subject_id);
+      const currInstructor = currDepartment?.instructors.find(
+        (instructor) => instructor.id === assignment.instructor_id
+      );
+      const currSubject = currDepartment?.subjects.find((subject) => subject.id === assignment.subject_id);
 
       switch (columnKey) {
         case "full_name":
-          return `${currStudent?.first_name} ${currStudent?.last_name}`;
+          return `${currInstructor?.first_name} ${currInstructor?.last_name}`;
         case "subject_name":
           return currSubject?.name;
         case "department_id":
           return currDepartment?.name;
         case "created_at":
-          return new Date(registration.created_at).toLocaleString();
-        case "updated_at":
-          return new Date(registration.updated_at).toLocaleString();
+          return new Date(assignment.created_at).toLocaleString();
         case "actions":
           return (
             <div className="relative flex items-center justify-center gap-2">
@@ -172,11 +162,11 @@ export default function SinhVienDangKyMonHocPage() {
                     onClick={() => {
                       setModalData({
                         department: currDepartment,
-                        student: currStudent,
+                        instructor: currInstructor,
                         subject: currSubject,
-                        assignment: registration,
+                        assignment,
                       });
-                      modalOpen(editStudentRegistrationModalKey);
+                      modalOpen(editInstructorAssignmentModalKey);
                     }}>
                     Chỉnh sửa
                   </DropdownItem>
@@ -186,8 +176,8 @@ export default function SinhVienDangKyMonHocPage() {
                       <MdOutlineDelete className="text-xl lg:text-2xl text-danger cursor-pointer active:opacity-50 hover:text-gray-400" />
                     }
                     onClick={() => {
-                      setModalData(registration);
-                      modalOpen(deleteStudentRegistrationModalKey);
+                      setModalData(assignment);
+                      modalOpen(deleteInstructorAssignmentModalKey);
                     }}>
                     Xoá
                   </DropdownItem>
@@ -227,9 +217,9 @@ export default function SinhVienDangKyMonHocPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <Input
             isClearable
-            isDisabled={registrationsQuery.isPending}
+            isDisabled={assignmentsQuery.isPending}
             className="w-full sm:max-w-[40%]"
-            placeholder="Tìm kiếm tên môn học hoặc sinh viên..."
+            placeholder="Tìm kiếm tên môn học hoặc giảng viên..."
             variant="underlined"
             startContent={<IoSearchOutline size={24} />}
             value={filterValue}
@@ -258,19 +248,19 @@ export default function SinhVienDangKyMonHocPage() {
               </DropdownMenu>
             </Dropdown>
             <Button
-              onPress={() => modalOpen(addStudentRegistrationModalKey)}
+              onPress={() => modalOpen(addInstructorAssignmentModalKey)}
               color="secondary"
               variant="shadow"
               className="text-sm md:text-base col-span-2 sm:col-span-1"
               endContent={<FaPlus />}
-              isLoading={registrationsQuery.isPending}>
-              Đăng ký môn học mới
+              isLoading={assignmentsQuery.isPending}>
+              Thêm phân công mới
             </Button>
           </div>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Có <span className="font-bold text-secondary">{registrationsQuery.data.length}</span> môn học được đăng ký
+            Có <span className="font-bold text-secondary">{assignmentsQuery.data.length}</span> môn học được phân công
           </span>
           <Select
             label="Số dòng:"
@@ -297,8 +287,8 @@ export default function SinhVienDangKyMonHocPage() {
       </div>
     );
   }, [
-    registrationsQuery.isPending,
-    registrationsQuery.data.length,
+    assignmentsQuery.isPending,
+    assignmentsQuery.data.length,
     filterValue,
     onSearchChange,
     visibleColumns,
@@ -372,7 +362,7 @@ export default function SinhVienDangKyMonHocPage() {
             <TableBody
               emptyContent={"Không tìm thấy giảng viên nào được phân công"}
               loadingContent={<Spinner label="Loading..." color="secondary" size="md" />}
-              isLoading={registrationsQuery.isPending}
+              isLoading={assignmentsQuery.isPending}
               items={sortedItems}>
               {(item) => (
                 <TableRow key={item.id}>
@@ -383,14 +373,14 @@ export default function SinhVienDangKyMonHocPage() {
           </Table>
         </CardBody>
       </Card>
-      {modelKey === addStudentRegistrationModalKey && (
-        <AddStudentRegistrationModal key={addStudentRegistrationModalKey} />
+      {modelKey === addInstructorAssignmentModalKey && (
+        <AddInstructorAssignmentModal key={addInstructorAssignmentModalKey} />
       )}
-      {modelKey === editStudentRegistrationModalKey && (
-        <EditStudentRegistrationModal key={editStudentRegistrationModalKey} />
+      {modelKey === editInstructorAssignmentModalKey && (
+        <EditInstructorAssignmentModal key={editInstructorAssignmentModalKey} />
       )}
-      {modelKey === deleteStudentRegistrationModalKey && (
-        <DeleteStudentRegistrationModal key={deleteStudentRegistrationModalKey} />
+      {modelKey === deleteInstructorAssignmentModalKey && (
+        <DeleteInstructorAssignmentModal key={deleteInstructorAssignmentModalKey} />
       )}
     </>
   );

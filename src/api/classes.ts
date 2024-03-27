@@ -1,7 +1,7 @@
 import http, { ApiSuccessResponse } from "@/lib/http";
 
 export interface ClassResponse {
-  id: number;
+  id: string;
   name: string;
   max_students: number;
   department_id: number;
