@@ -50,8 +50,6 @@ const columns = [
   { name: "Họ và tên sinh viên", uid: "full_name", sortable: true },
   { name: "Tên môn học đã đăng ký", uid: "subject_name", sortable: true },
   { name: "Thuộc khoa", uid: "department_id", sortable: true },
-  { name: "Ngày đăng ký", uid: "created_at", sortable: true },
-  { name: "Ngày cập nhật đăng ký", uid: "updated_at", sortable: true },
   { name: "Hành động", uid: "actions" },
 ];
 
@@ -60,8 +58,6 @@ const INITIAL_VISIBLE_COLUMNS = [
   "full_name",
   "subject_name",
   "department_id",
-  "created_at",
-  "updated_at",
   "actions",
 ];
 
@@ -150,10 +146,6 @@ export default function SinhVienDangKyMonHocPage() {
           return currSubject?.name;
         case "department_id":
           return currDepartment?.name;
-        case "created_at":
-          return new Date(registration.created_at).toLocaleString();
-        case "updated_at":
-          return new Date(registration.updated_at).toLocaleString();
         case "actions":
           return (
             <div className="relative flex items-center justify-center gap-2">

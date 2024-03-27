@@ -4,8 +4,6 @@ export interface RegistrationResponse {
   id: number;
   subject_id: string;
   student_id: string;
-  created_at: string;
-  updated_at: string;
 }
 
 //----------------------------------------------GET LIST----------------------------------------------

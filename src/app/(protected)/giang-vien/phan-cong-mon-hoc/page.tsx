@@ -49,7 +49,6 @@ const columns = [
   { name: "Họ và tên giáo viên", uid: "full_name", sortable: true },
   { name: "Tên môn học được phân công", uid: "subject_name", sortable: true },
   { name: "Thuộc khoa", uid: "department_id", sortable: true },
-  { name: "Ngày được phân công", uid: "created_at", sortable: true },
   { name: "Hành động", uid: "actions" },
 ];
 
@@ -142,8 +141,6 @@ export default function GiangVienPhanCongMonHocPage() {
           return currSubject?.name;
         case "department_id":
           return currDepartment?.name;
-        case "created_at":
-          return new Date(assignment.created_at).toLocaleString();
         case "actions":
           return (
             <div className="relative flex items-center justify-center gap-2">

@@ -4,7 +4,6 @@ export interface AssignmentResponse {
   id: number;
   subject_id: string;
   instructor_id: string;
-  created_at: string;
 }
 
 //----------------------------------------------GET LIST----------------------------------------------

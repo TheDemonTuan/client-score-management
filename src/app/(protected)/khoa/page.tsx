@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ChangeEvent, Key, useCallback, useMemo, useState } from "react";
+import React, { ChangeEvent, Key, ReactNode, useCallback, useMemo, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -53,6 +53,7 @@ import {
   editDepartmentModalKey,
 } from "@/components/Khoa/modal";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { StudentResponse } from "@/api/students";
 
 const columns = [
   { name: "Mã khoa", uid: "id", sortable: true },
@@ -180,7 +181,7 @@ export default function KhoaPage() {
                 size={24}
                 onClick={() => {
                   modalOpen(previewRelatedModalKey);
-                  setModalData<PreviewRelatedModalData<ClassResponse>>({
+                  setModalData<PreviewRelatedModalData<StudentResponse>>({
                     data: department?.students ?? [],
                     columns: PreviewRelatedStudentColumns,
                   });
@@ -418,7 +419,7 @@ export default function KhoaPage() {
               loadingState={departmentsIsPending ? "loading" : "idle"}
               items={sortedItems}>
               {(item) => (
-                <TableRow key={item.id}>{(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}</TableRow>
+                <TableRow key={item.id}>{(columnKey) => <TableCell>{renderCell(item, columnKey) as ReactNode}</TableCell>}</TableRow>
               )}
             </TableBody>
           </Table>
