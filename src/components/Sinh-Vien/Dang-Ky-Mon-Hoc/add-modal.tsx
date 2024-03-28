@@ -9,9 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 import CrudModal from "../../crud-modal";
-import { AssignmentCreateParams, AssignmentResponse, assignmentCreate, assignmentGetAll } from "@/api/assignment";
 import { useEffect } from "react";
-import { InstructorReponse } from "@/api/instructors";
 import { SubjectResponse } from "@/api/subjects";
 import { StudentResponse } from "@/api/students";
 import {
@@ -53,7 +51,7 @@ const AddStudentRegistrationModal = () => {
   >({
     mutationFn: async (params) => await registrationCreate(params),
     onSuccess: (res) => {
-      toast.success("Phân công môn học mới thành công !");
+      toast.success("Đăng ký môn học mới thành công !");
       queryClient.setQueryData(["registrations"], (oldData: ApiSuccessResponse<RegistrationResponse[]>) =>
         oldData
           ? {
@@ -85,7 +83,7 @@ const AddStudentRegistrationModal = () => {
                 subject.id === res.data.subject_id
                   ? {
                       ...subject,
-                      instructor_assignments: [...subject.instructor_assignments, res.data],
+                      student_registrations: [...subject.student_registrations, res.data],
                     }
                   : subject
               ),
@@ -220,9 +218,9 @@ const AddStudentRegistrationModal = () => {
                     defaultItems={
                       departmentsData?.find((department) => department.id === parseInt(departmentId))?.subjects ?? []
                     }
-                    aria-label="Chọn môn học phân công"
+                    aria-label="Chọn môn học đăng ký"
                     placeholder="Nhập tên môn học"
-                    label="Chọn môn học phân công"
+                    label="Chọn môn học đăng ký"
                     radius="lg"
                     variant="bordered"
                     color="secondary"

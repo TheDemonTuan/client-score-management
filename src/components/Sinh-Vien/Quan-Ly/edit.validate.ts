@@ -64,11 +64,28 @@ export const EditStudentFormValidateSchema = z.object({
   academic_year: z
     .string({
       required_error: "Khoá học không được để trống.",
+      invalid_type_error: "Khoá học không hợp lệ.",
+    })
+    .min(1, {
+      message: "Khoá học không được để trống.",
     })
     .trim(),
   department_id: z
     .string({
       required_error: "Khoa không được để trống.",
+      invalid_type_error: "Khoa không hợp lệ.",
+    })
+    .min(1, {
+      message: "Khoa không được để trống.",
+    })
+    .trim(),
+  class_id: z
+    .string({
+      required_error: "Lớp không được để trống.",
+      invalid_type_error: "Lớp không hợp lệ.",
+    })
+    .min(1, {
+      message: "Lớp không được để trống.",
     })
     .trim(),
 });

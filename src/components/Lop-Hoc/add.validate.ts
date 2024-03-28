@@ -1,30 +1,43 @@
 import { z } from "zod";
 
 export const AddClassFormValidateSchema = z.object({
-  name: z
+  number_class: z
+    .number({
+      required_error: "Vui lòng nhập số lớp cần tạo.",
+    })
+    .int({
+      message: "Số lớp phải là số nguyên.",
+    })
+    .gte(1, {
+      message: "Số lớp phải lớn hơn hoặc bằng 1.",
+    })
+    .lte(99, {
+      message: "Số lớp phải nhỏ hơn hoặc bằng 99.",
+    }),
+  academic_year: z
     .string({
-      required_error: "Vui lòng nhập tên.",
-    })
-    .min(3, {
-      message: "Tên không được ít hơn 3 ký tự.",
-    })
-    .max(100, {
-      message: "Tên không được quá 100 ký tự.",
+      required_error: "Khoá học không được để trống.",
     })
     .trim(),
   max_students: z
-    .string({
-      required_error: "Số lượng tối đa không được để trống.",
+    .number({
+      required_error: "Vui lòng nhập số sinh sinh tối đa.",
     })
-    .trim(),
+    .int({
+      message: "Số sinh viên tối đa phải là số nguyên.",
+    })
+    .gte(15, {
+      message: "Số sinh viên tối đa phải lớn hơn hoặc bằng 15.",
+    })
+    .lte(60, {
+      message: "Số sinh viên tối đa phải nhỏ hơn hoặc bằng 60.",
+    }),
   department_id: z
     .string({
       required_error: "Khoa không được để trống.",
     })
-    .trim(),
-  host_instructor_id: z
-    .string({
-      required_error: "Giảng viên chủ nhiêm không được để trống.",
+    .min(1, {
+      message: "Khoa không được để trống.",
     })
     .trim(),
 });

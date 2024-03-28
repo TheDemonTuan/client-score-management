@@ -29,7 +29,7 @@ const CRUDModal = ({ children, handleSubmit, isPending, btnText, title }: CRUDMo
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader>{title}</ModalHeader>
+            <ModalHeader className="text-secondary">{title}</ModalHeader>
             <ModalBody>{children}</ModalBody>
             <ModalFooter>
               <Button color="danger" variant="flat" onPress={onClose} isLoading={isPending}>

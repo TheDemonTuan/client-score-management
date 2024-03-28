@@ -238,6 +238,7 @@ const EditSubjectModal = () => {
                     defaultSelectedKeys={[field.value]}
                     selectedKeys={[field.value]}
                     disabledKeys={[field.value]}
+                    isDisabled
                     label="Khoa"
                     {...field}>
                     <SelectItem key={modalData?.department_id} className="capitalize">

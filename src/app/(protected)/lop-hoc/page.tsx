@@ -46,13 +46,14 @@ import {
   deleteClassModalKey,
   editClassModalKey,
 } from "@/components/Lop-Hoc/modal";
-import { InstructorReponse, instructorGetAll } from "@/api/instructors";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { EditClassModalData } from "@/components/Lop-Hoc/edit-modal";
 
 const columns = [
   { name: "Mã lớp", uid: "id", sortable: true },
   { name: "Tên lớp", uid: "name", sortable: true },
   { name: "Số lượng tối đa", uid: "max_students", sortable: true },
+  { name: "Khoá học", uid: "academic_year", sortable: true },
   { name: "Thuộc khoa", uid: "department_id", sortable: true },
   { name: "Chủ nhiệm bởi", uid: "host_instructor_id", sortable: true },
   { name: "Số lượng sinh viên", uid: "students", sortable: true },
@@ -63,13 +64,14 @@ const INITIAL_VISIBLE_COLUMNS = [
   "id",
   "name",
   "max_students",
+  "academic_year",
   "department_id",
   "host_instructor_id",
   "students",
   "actions",
 ];
 
-export default function LopHocQuanLyPage() {
+export default function LopHocPage() {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
@@ -88,25 +90,12 @@ export default function LopHocQuanLyPage() {
 
   //My Logic
 
-  const [departmentsQuery, instructorsQuery, classesQuery] = useSuspenseQueries({
+  const [departmentsQuery, classesQuery] = useSuspenseQueries({
     queries: [
       {
-        queryKey: ["departments", { preload: false, select: ["id", "name"] }],
-        queryFn: async () =>
-          await departmentGetAll({
-            preload: false,
-            select: ["id", "name"],
-          }),
+        queryKey: ["departments"],
+        queryFn: async () => await departmentGetAll(),
         select: (res: ApiSuccessResponse<DepartmentResponse[]>) => res?.data,
-      },
-      {
-        queryKey: ["instructors", { preload: false, select: ["id", "first_name", "last_name"] }],
-        queryFn: async () =>
-          await instructorGetAll({
-            preload: false,
-            select: ["id", "first_name", "last_name"],
-          }),
-        select: (res: ApiSuccessResponse<InstructorReponse[]>) => res?.data,
       },
       {
         queryKey: ["classes"],
@@ -155,14 +144,17 @@ export default function LopHocQuanLyPage() {
     (classData: ClassResponse, columnKey: Key) => {
       const cellValue = classData[columnKey as keyof ClassResponse];
 
+      const currDepartment = departmentsQuery.data?.find((department) => department.id === classData.department_id);
+      const currInstructor = currDepartment?.instructors?.find(
+        (instructor) => instructor.id === classData.host_instructor_id
+      );
+
       switch (columnKey) {
         case "host_instructor_id":
-          return `${
-            instructorsQuery.data?.find((instructor) => instructor.id === classData.host_instructor_id)?.first_name
-          } ${instructorsQuery.data?.find((instructor) => instructor.id === classData.host_instructor_id)?.last_name}`;
+          return currInstructor ? `${currInstructor?.first_name} ${currInstructor?.last_name}` : "Chưa có";
         case "department_id":
           return `
-              ${departmentsQuery.data?.find((department) => department.id === classData.department_id)?.name}`;
+              ${currDepartment?.name}`;
         case "students":
           return (
             <div className="relative flex justify-center items-center gap-2">
@@ -196,7 +188,11 @@ export default function LopHocQuanLyPage() {
                       <FaRegEdit className="text-lg lg:text-xl text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400" />
                     }
                     onClick={() => {
-                      setModalData(classData);
+                      setModalData<EditClassModalData>({
+                        class: classData,
+                        department: currDepartment,
+                        instructor: currInstructor,
+                      });
                       modalOpen(editClassModalKey);
                     }}>
                     Chỉnh sửa
@@ -220,7 +216,7 @@ export default function LopHocQuanLyPage() {
           return cellValue;
       }
     },
-    [instructorsQuery.data, departmentsQuery.data, setModalData, modalOpen]
+    [departmentsQuery.data, setModalData, modalOpen]
   );
 
   const onRowsPerPageChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
@@ -251,8 +247,9 @@ export default function LopHocQuanLyPage() {
             isDisabled={classesQuery.isPending}
             className="w-full sm:max-w-[40%]"
             placeholder="Tìm kiếm theo tên lớp..."
-            variant="bordered"
-            startContent={<IoSearchOutline />}
+            variant="underlined"
+            color="secondary"
+            startContent={<IoSearchOutline size={24} className="text-secondary" />}
             value={filterValue}
             onClear={() => onClear()}
             onValueChange={onSearchChange}
@@ -260,7 +257,7 @@ export default function LopHocQuanLyPage() {
           <div className="grid grid-flow-col gap-2 justify-between">
             <Dropdown className="col-span-1 text-sm md:text-base">
               <DropdownTrigger className="hidden sm:flex">
-                <Button endContent={<RiArrowDownSLine className="text-small" />} variant="faded">
+                <Button endContent={<RiArrowDownSLine className="text-small" />} color="secondary" variant="bordered">
                   Hiển thị
                 </Button>
               </DropdownTrigger>
@@ -281,7 +278,7 @@ export default function LopHocQuanLyPage() {
             <Button
               onPress={() => modalOpen(addClassModalKey)}
               color="secondary"
-              variant="solid"
+              variant="shadow"
               className="text-sm md:text-base col-span-3 sm:col-span-1"
               endContent={<FaPlus />}
               isLoading={classesQuery.isPending}>
@@ -291,26 +288,27 @@ export default function LopHocQuanLyPage() {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Có <span className="font-bold text-black">{classesQuery.data.length}</span> lớp học
+            Có <span className="font-bold text-secondary">{classesQuery.data.length}</span> lớp học
           </span>
           <Select
-            label="Số dòng:"
+            label="Số dòng"
             defaultSelectedKeys={rowsPerPage.toString()}
             size="sm"
+            color="secondary"
             labelPlacement="outside-left"
-            variant="faded"
+            variant="bordered"
             className="max-w-28 sm:max-w-32"
             onChange={onRowsPerPageChange}>
-            <SelectItem key={5} value="5">
+            <SelectItem color="secondary" key={5} value="5">
               5
             </SelectItem>
-            <SelectItem key={25} value="25">
+            <SelectItem color="secondary" key={25} value="25">
               25
             </SelectItem>
-            <SelectItem key={50} value="50">
+            <SelectItem color="secondary" key={50} value="50">
               50
             </SelectItem>
-            <SelectItem key={100} value="100">
+            <SelectItem color="secondary" key={100} value="100">
               100
             </SelectItem>
           </Select>
@@ -392,9 +390,7 @@ export default function LopHocQuanLyPage() {
             <TableBody
               emptyContent={"Không tìm thấy lớp học nào"}
               loadingContent={<Spinner label="Loading..." color="secondary" size="md" />}
-              loadingState={
-                instructorsQuery.isPending || departmentsQuery.isPending || classesQuery.isPending ? "loading" : "idle"
-              }
+              isLoading={classesQuery.isPending || departmentsQuery.isPending}
               items={sortedItems}>
               {(item) => (
                 <TableRow key={item.id}>

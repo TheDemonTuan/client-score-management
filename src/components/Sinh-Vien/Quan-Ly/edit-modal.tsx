@@ -1,7 +1,17 @@
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useModalStore } from "@/stores/modal-store";
-import { Button, Input, Popover, PopoverTrigger, PopoverContent, Select, SelectItem } from "@nextui-org/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Button,
+  Input,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Select,
+  SelectItem,
+  Autocomplete,
+  AutocompleteItem,
+} from "@nextui-org/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -12,9 +22,16 @@ import { cn } from "@/lib/cn";
 import { EditStudentFormValidate, EditStudentFormValidateSchema } from "./edit.validate";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "@/components/ui/calendar";
-import { DepartmentResponse, departmentGetAll } from "@/api/departments";
+import { DepartmentResponse } from "@/api/departments";
 import CrudModal from "../../crud-modal";
 import { StudentResponse, StudentUpdateByIdParams, studentUpdateById } from "@/api/students";
+import { ClassResponse } from "@/api/classes";
+
+export interface EditStudentModalData {
+  department?: DepartmentResponse;
+  class?: ClassResponse;
+  student: StudentResponse;
+}
 
 const EditStudentModal = () => {
   const queryClient = useQueryClient();
@@ -22,38 +39,29 @@ const EditStudentModal = () => {
   const { modalClose, modalData } = useModalStore(
     useShallow((state) => ({
       modalClose: state.modalClose,
-      modalData: state.modalData as StudentResponse,
+      modalData: state.modalData as EditStudentModalData,
     }))
   );
 
   const editForm = useForm<EditStudentFormValidate>({
     resolver: zodResolver(EditStudentFormValidateSchema),
     values: {
-      first_name: modalData?.first_name,
-      last_name: modalData?.last_name,
-      email: modalData?.email,
-      address: modalData?.address,
-      birth_day: modalData?.birth_day,
-      phone: modalData?.phone,
-      gender: modalData.gender ? "nu" : "nam",
-      academic_year: modalData?.academic_year + "",
-      department_id: modalData?.department_id + "",
+      first_name: modalData.student.first_name,
+      last_name: modalData.student.last_name,
+      email: modalData.student.email,
+      address: modalData.student.address,
+      birth_day: modalData.student.birth_day,
+      phone: modalData.student.phone,
+      gender: modalData.student.gender ? "nu" : "nam",
+      academic_year: modalData.student.academic_year + "",
+      department_id: modalData.student.department_id + "",
+      class_id: modalData.student.class_id + "",
     },
   });
 
   useEffect(() => {
-    editForm.setValue("birth_day", new Date(modalData.birth_day));
+    editForm.setValue("birth_day", new Date(modalData.student.birth_day));
   }, [editForm, modalData]);
-
-  const { data: departmentData, isPending: departmentIsPending } = useQuery<
-    ApiSuccessResponse<DepartmentResponse[]>,
-    ApiErrorResponse,
-    DepartmentResponse[]
-  >({
-    queryKey: ["departments"],
-    queryFn: async () => await departmentGetAll(),
-    select: (res) => res?.data,
-  });
 
   const { mutate: editMutate, isPending: editIsPending } = useMutation<
     ApiSuccessResponse<StudentResponse>,
@@ -71,7 +79,6 @@ const EditStudentModal = () => {
             }
           : oldData
       );
-
       queryClient.setQueryData(["departments"], (oldData: ApiSuccessResponse<DepartmentResponse[]>) =>
         oldData
           ? {
@@ -87,6 +94,21 @@ const EditStudentModal = () => {
             }
           : oldData
       );
+      queryClient.setQueryData(["classes"], (oldData: ApiSuccessResponse<ClassResponse[]>) =>
+        oldData
+          ? {
+              ...oldData,
+              data: oldData.data.map((classItem) =>
+                classItem.id === res.data.class_id
+                  ? {
+                      ...classItem,
+                      students: classItem.students.map((student) => (student.id === res.data.id ? res.data : student)),
+                    }
+                  : classItem
+              ),
+            }
+          : oldData
+      );
       modalClose();
     },
     onError: (error) => {
@@ -97,7 +119,7 @@ const EditStudentModal = () => {
   const handleSubmit = () => {
     editForm.handleSubmit((data: EditStudentFormValidate) => {
       editMutate({
-        id: modalData?.id,
+        id: modalData.student.id,
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
@@ -105,6 +127,7 @@ const EditStudentModal = () => {
         birth_day: data.birth_day,
         phone: data.phone,
         gender: data.gender === "nu",
+        class_id: data.class_id,
       });
     })();
   };
@@ -123,9 +146,10 @@ const EditStudentModal = () => {
                     <Input
                       isInvalid={!!editForm.formState.errors.first_name}
                       isRequired
-                      placeholder={modalData?.first_name}
+                      placeholder={modalData.student.first_name}
                       label="Họ"
-                      variant="faded"
+                      variant="bordered"
+                      color="secondary"
                       onClear={() => editForm.setValue("first_name", "")}
                       {...field}
                       autoFocus
@@ -144,9 +168,10 @@ const EditStudentModal = () => {
                     <Input
                       isInvalid={!!editForm.formState.errors.last_name}
                       isRequired
-                      placeholder={modalData?.last_name}
+                      placeholder={modalData.student.last_name}
                       label="Tên"
-                      variant="faded"
+                      variant="bordered"
+                      color="secondary"
                       onClear={() => editForm.setValue("last_name", "")}
                       {...field}
                     />
@@ -165,9 +190,10 @@ const EditStudentModal = () => {
                   <Input
                     isInvalid={!!editForm.formState.errors.email}
                     isRequired
-                    placeholder={modalData?.email}
+                    placeholder={modalData.student.email}
                     label="Email"
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
                     onClear={() => editForm.setValue("email", "")}
                     {...field}
                   />
@@ -185,9 +211,10 @@ const EditStudentModal = () => {
                   <Input
                     isInvalid={!!editForm.formState.errors.address}
                     isRequired
-                    placeholder={modalData?.address}
+                    placeholder={modalData.student.address}
                     label="Địa chỉ"
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
                     onClear={() => editForm.setValue("address", "")}
                     {...field}
                   />
@@ -209,9 +236,9 @@ const EditStudentModal = () => {
                           <Button
                             size="lg"
                             about="Chọn ngày sinh"
-                            variant="faded"
+                            variant="bordered"
                             className={cn(
-                              "pl-3 text-left font-normal",
+                              "pl-3 text-left text-sm",
                               !field.value && "text-muted-foreground",
                               !!editForm.formState.errors.birth_day && "border-danger text-danger"
                             )}>
@@ -248,11 +275,12 @@ const EditStudentModal = () => {
                     <Select
                       isInvalid={!!editForm.formState.errors.gender}
                       isRequired
-                      variant="faded"
+                      variant="bordered"
+                      color="secondary"
                       radius="lg"
                       label="Giới tính"
                       size="sm"
-                      defaultSelectedKeys={[modalData?.gender ? "nu" : "nam"]}
+                      defaultSelectedKeys={[modalData.student.gender ? "nu" : "nam"]}
                       {...field}>
                       <SelectItem key="nam" value="nam">
                         Nam
@@ -276,9 +304,10 @@ const EditStudentModal = () => {
                   <Input
                     isInvalid={!!editForm.formState.errors.phone}
                     isRequired
-                    placeholder={modalData?.phone}
+                    placeholder={modalData.student.phone}
                     label="Số điện thoại"
-                    variant="faded"
+                    color="secondary"
+                    variant="bordered"
                     onClear={() => editForm.setValue("phone", "")}
                     {...field}
                   />
@@ -296,12 +325,16 @@ const EditStudentModal = () => {
                   <Select
                     isInvalid={!!editForm.formState.errors.academic_year}
                     isRequired
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
                     disabledKeys={[field.value]}
                     label="Chọn khoá học"
                     onChange={field.onChange}
+                    isDisabled
                     selectedKeys={[field.value]}>
-                    <SelectItem key={modalData.academic_year}>{2000 + modalData.academic_year + ""}</SelectItem>
+                    <SelectItem key={modalData.student.academic_year}>
+                      {modalData.student.academic_year + ""}
+                    </SelectItem>
                   </Select>
                 </FormControl>
                 <FormMessage />
@@ -317,21 +350,63 @@ const EditStudentModal = () => {
                   <Select
                     isInvalid={!!editForm.formState.errors.department_id}
                     isRequired
-                    variant="faded"
-                    isLoading={departmentIsPending}
+                    variant="bordered"
+                    color="secondary"
                     defaultSelectedKeys={[field.value]}
                     selectedKeys={[field.value]}
                     disabledKeys={[field.value]}
+                    isDisabled
                     label="Khoa"
                     {...field}>
-                    <SelectItem key={modalData?.department_id} className="capitalize">
-                      {departmentData?.find((department) => department.id === modalData?.department_id)?.name}
+                    <SelectItem
+                      key={modalData.student.id}
+                      textValue={modalData.department?.name}
+                      className="capitalize">
+                      {modalData.department?.name}
                     </SelectItem>
                   </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
+          />
+          <FormField
+            control={editForm.control}
+            name="class_id"
+            render={({ field }) => {
+              const classes = modalData.department?.classes.filter(
+                (classItem) => classItem.academic_year === modalData.student.academic_year
+              );
+              return (
+                <FormItem>
+                  <FormControl>
+                    <Autocomplete
+                      items={classes}
+                      aria-label="Chọn lớp"
+                      placeholder={modalData.class?.name}
+                      label="Chọn lớp"
+                      radius="lg"
+                      variant="bordered"
+                      color="secondary"
+                      errorMessage={editForm.formState.errors.class_id?.message}
+                      selectedKey={field.value}
+                      onSelectionChange={field.onChange}
+                      disabledKeys={[field.value]}
+                      isInvalid={!!editForm.formState.errors.class_id}
+                      isRequired
+                      isDisabled={classes?.length === 0}
+                      allowsCustomValue
+                      {...field}>
+                      {(item) => (
+                        <AutocompleteItem key={item?.id} textValue={item?.name} className="capitalize">
+                          {item.name}
+                        </AutocompleteItem>
+                      )}
+                    </Autocomplete>
+                  </FormControl>
+                </FormItem>
+              );
+            }}
           />
         </form>
       </Form>

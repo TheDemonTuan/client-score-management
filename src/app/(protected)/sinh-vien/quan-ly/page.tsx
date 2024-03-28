@@ -51,6 +51,8 @@ import {
   deleteStudentModalKey,
   editStudentModalKey,
 } from "@/components/Sinh-Vien/Quan-Ly/modal";
+import { RegistrationResponse } from "@/api/registration";
+import { EditStudentModalData } from "@/components/Sinh-Vien/Quan-Ly/edit-modal";
 
 const columns = [
   { name: "Mã", uid: "id", sortable: true },
@@ -161,19 +163,22 @@ export default function SinhVienQuanLyPage() {
     (student: StudentResponse, columnKey: Key) => {
       const cellValue = student[columnKey as keyof StudentResponse];
 
+      const currDepartment = departmentsQuery.data.find((department) => department.id === student.department_id);
+      const currClass = classesQuery.data.find((classs) => classs.id === student.class_id);
+
       switch (columnKey) {
         case "full_name":
           return `${student.first_name} ${student.last_name}`;
         case "academic_year":
-          return `${2000 + student.academic_year}`;
+          return `${student.academic_year}`;
         case "gender":
           return `${!student.gender ? "Nam" : "Nữ"}`;
         case "department_id":
           return `
-              ${departmentsQuery.data.find((department) => department.id === student.department_id)?.name}`;
+              ${currDepartment?.name}`;
         case "class_id":
           return `
-              ${classesQuery.data.find((classs) => classs.id === student.class_id)?.name ?? "Chưa có"}`;
+              ${currClass?.name ?? "Chưa có"}`;
         case "grades":
           return (
             <div className="relative flex justify-center items-center gap-2">
@@ -199,7 +204,7 @@ export default function SinhVienQuanLyPage() {
                 className="elative flex justify-center items-center cursor-pointer hover:text-gray-400"
                 size={24}
                 onClick={() => {
-                  setModalData<PreviewRelatedModalData<ClassResponse>>({
+                  setModalData<PreviewRelatedModalData<RegistrationResponse>>({
                     data: student?.registrations ?? [],
                     columns: PreviewRelatedAssignmentColumns,
                   });
@@ -224,7 +229,11 @@ export default function SinhVienQuanLyPage() {
                       <FaRegEdit className="text-lg lg:text-xl text-blue-400 cursor-pointer active:opacity-50 hover:text-gray-400" />
                     }
                     onClick={() => {
-                      setModalData(student);
+                      setModalData<EditStudentModalData>({
+                        student,
+                        department: currDepartment,
+                        class: currClass,
+                      });
                       modalOpen(editStudentModalKey);
                     }}>
                     Chỉnh sửa

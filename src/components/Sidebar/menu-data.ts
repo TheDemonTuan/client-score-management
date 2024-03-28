@@ -60,18 +60,6 @@ export const MenuData = [
     title: "Lớp học",
     link: "/lop-hoc",
     icon: SiGoogleclassroom,
-    children: [
-      {
-        title: "Quản lý",
-        link: "/quan-ly",
-        icon: TbSettingsCode,
-      },
-      {
-        title: "Quản lý sinh viên",
-        link: "/dang-ky",
-        icon: LiaUsersCogSolid,
-      },
-    ],
   },
   {
     title: "Điểm",

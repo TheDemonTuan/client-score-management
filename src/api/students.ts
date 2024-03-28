@@ -34,13 +34,13 @@ export const studentGetById = async (id: string) =>
 
 //----------------------------------------------CREATE----------------------------------------------\
 
-export interface StudentCreateParams extends Omit<StudentResponse, "id" | "grades" | "class_id" | "registrations"> {}
+export interface StudentCreateParams extends Omit<StudentResponse, "id" | "grades" | "registrations"> {}
 
 export const studentCreate = async (params: StudentCreateParams) =>
   http.post<ApiSuccessResponse<StudentResponse>>(`students`, params).then((res) => res.data);
 
 //----------------------------------------------UPDATE----------------------------------------------\
-export interface StudentUpdateByIdParams extends Omit<StudentResponse,"academic_year" | "department_id" | "grades" | "class_id" | "registrations"> {}
+export interface StudentUpdateByIdParams extends Omit<StudentResponse,"academic_year" | "department_id" | "grades" | "registrations"> {}
 
 export const studentUpdateById = async (params: StudentUpdateByIdParams) =>
   http.put<ApiSuccessResponse<StudentResponse>>(`students/${params.id}`, params).then((res) => res.data);

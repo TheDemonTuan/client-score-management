@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ChangeEvent, Key, useCallback, useMemo, useState } from "react";
+import React, { ChangeEvent, Key, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -28,14 +28,19 @@ import { capitalize } from "@/lib/capitalize";
 import { FaPlus } from "react-icons/fa6";
 import { RiArrowDownSLine } from "react-icons/ri";
 import { IoSearchOutline } from "react-icons/io5";
-import { useSuspenseQueries } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
 import { ApiSuccessResponse } from "@/lib/http";
 import { MdOutlineDelete } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
 import { useModalStore } from "@/stores/modal-store";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { RegistrationResponse, registrationGetAll } from "@/api/registration";
+import {
+  RegistrationResponse,
+  registrationGetAll,
+  registrationGetAllByDepartmentId,
+  registrationGetAllByStudentName,
+} from "@/api/registration";
 import {
   AddStudentRegistrationModal,
   DeleteStudentRegistrationModal,
@@ -44,6 +49,7 @@ import {
   deleteStudentRegistrationModalKey,
   editStudentRegistrationModalKey,
 } from "@/components/Sinh-Vien/Dang-Ky-Mon-Hoc/modal";
+import _, { set } from "lodash";
 
 const columns = [
   { name: "Mã", uid: "id", sortable: true },
@@ -53,24 +59,22 @@ const columns = [
   { name: "Hành động", uid: "actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = [
-  "id",
-  "full_name",
-  "subject_name",
-  "department_id",
-  "actions",
-];
+const INITIAL_VISIBLE_COLUMNS = ["id", "full_name", "subject_name", "department_id", "actions"];
 
 export default function SinhVienDangKyMonHocPage() {
-  const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({});
+  const [departmentFilter, setDepartmentFilter] = useState<string>("");
+  const [studentSearch, setStudentSearch] = useState<string>("");
+  const [canStudentSearch, setCanStudentSearch] = useState<string>("");
+  const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);
 
-  const hasSearchFilter = Boolean(filterValue);
+  const hasDepartmentFilter = Boolean(departmentFilter);
+  const hasStudentSearch = Boolean(canStudentSearch);
 
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return columns;
@@ -94,21 +98,73 @@ export default function SinhVienDangKyMonHocPage() {
     ],
   });
 
+  const { data: filterRegistrationsData, isFetching: filterRegistrationsIsFetching } = useQuery({
+    queryKey: ["registrations", "department", { id: departmentFilter }],
+    queryFn: async () => await registrationGetAllByDepartmentId({ id: departmentFilter }),
+    enabled: hasDepartmentFilter,
+    select: (res: ApiSuccessResponse<RegistrationResponse[]>) => res?.data,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+
+  const handleFilter = useCallback((query: Selection) => {
+    setDepartmentFilter(Array.from(query)?.at(0) as string);
+  }, []);
+
+  const { data: searchRegistrationsData, isFetching: searchRegistrationsIsFetching } = useQuery({
+    queryKey: ["registrations", "student", { name: canStudentSearch }],
+    queryFn: async () => await registrationGetAllByStudentName({ name: canStudentSearch }),
+    enabled: hasStudentSearch,
+    select: (res: ApiSuccessResponse<RegistrationResponse[]>) => res?.data,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedHandleSearch = useCallback(
+    _.debounce((keywork: string) => {
+      setCanStudentSearch(keywork);
+    }, 1000),
+    []
+  );
+
+  const handleSearch = useCallback(
+    (keywork: string) => {
+      setCanStudentSearch("");
+      setStudentSearch(keywork);
+      debouncedHandleSearch(keywork);
+    },
+    [debouncedHandleSearch]
+  );
+
+  const registrationIsLoading =
+    departmentsQuery.isPending ||
+    registrationsQuery.isPending ||
+    filterRegistrationsIsFetching ||
+    searchRegistrationsIsFetching;
+
   const { modalOpen, setModalData, modelKey } = useModalStore();
+
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] === "registrations" && query.queryKey[1] === "department",
+      });
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] === "registrations" && query.queryKey[1] === "student",
+      });
+    };
+  }, [queryClient]);
 
   //End My Logic
 
   const filteredItems = useMemo(() => {
-    let filteredAssignments = [...(registrationsQuery.data ?? [])];
+    if (searchRegistrationsData) return searchRegistrationsData;
 
-    if (hasSearchFilter) {
-      filteredAssignments = filteredAssignments.filter((registration) =>
-        registration.student_id.toLowerCase().includes(filterValue.toLowerCase())
-      );
-    }
+    if (filterRegistrationsData) return filterRegistrationsData;
 
-    return filteredAssignments;
-  }, [registrationsQuery.data, hasSearchFilter, filterValue]);
+    return registrationsQuery.data;
+  }, [searchRegistrationsData, filterRegistrationsData, registrationsQuery.data]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -166,7 +222,7 @@ export default function SinhVienDangKyMonHocPage() {
                         department: currDepartment,
                         student: currStudent,
                         subject: currSubject,
-                        assignment: registration,
+                        registration,
                       });
                       modalOpen(editStudentRegistrationModalKey);
                     }}>
@@ -199,17 +255,8 @@ export default function SinhVienDangKyMonHocPage() {
     setPage(1);
   }, []);
 
-  const onSearchChange = useCallback((value?: string) => {
-    if (value) {
-      setFilterValue(value);
-      setPage(1);
-    } else {
-      setFilterValue("");
-    }
-  }, []);
-
   const onClear = useCallback(() => {
-    setFilterValue("");
+    setStudentSearch("");
     setPage(1);
   }, []);
 
@@ -219,16 +266,43 @@ export default function SinhVienDangKyMonHocPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <Input
             isClearable
-            isDisabled={registrationsQuery.isPending}
+            isDisabled={registrationsQuery.isPending || hasDepartmentFilter}
             className="w-full sm:max-w-[40%]"
-            placeholder="Tìm kiếm tên môn học hoặc sinh viên..."
+            placeholder="Tìm kiếm tên sinh viên..."
             variant="underlined"
             startContent={<IoSearchOutline size={24} />}
-            value={filterValue}
+            value={studentSearch}
             onClear={() => onClear()}
-            onValueChange={onSearchChange}
+            onValueChange={handleSearch}
           />
           <div className="grid grid-flow-col gap-2 justify-between">
+            <Dropdown className="col-span-1">
+              <DropdownTrigger className="hidden sm:flex">
+                <Button
+                  endContent={<RiArrowDownSLine className="text-small" />}
+                  variant="ghost"
+                  isDisabled={Boolean(studentSearch)}>
+                  {departmentFilter
+                    ? departmentsQuery.data.find((department) => department.id == parseInt(departmentFilter))?.name
+                    : "Lọc theo khoa"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Table Columns"
+                closeOnSelect={true}
+                color="secondary"
+                items={departmentsQuery.data}
+                defaultSelectedKeys={[departmentFilter]}
+                selectedKeys={[departmentFilter]}
+                selectionMode="single"
+                onSelectionChange={handleFilter}>
+                {(item) => (
+                  <DropdownItem key={item.id} className="capitalize">
+                    {capitalize(item.name)}
+                  </DropdownItem>
+                )}
+              </DropdownMenu>
+            </Dropdown>
             <Dropdown className="col-span-1 text-sm md:text-base">
               <DropdownTrigger className="hidden sm:flex">
                 <Button endContent={<RiArrowDownSLine className="text-small" />} variant="ghost">
@@ -255,14 +329,14 @@ export default function SinhVienDangKyMonHocPage() {
               variant="shadow"
               className="text-sm md:text-base col-span-2 sm:col-span-1"
               endContent={<FaPlus />}
-              isLoading={registrationsQuery.isPending}>
+              isLoading={registrationIsLoading}>
               Đăng ký môn học mới
             </Button>
           </div>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Có <span className="font-bold text-secondary">{registrationsQuery.data.length}</span> môn học được đăng ký
+            Có <span className="font-bold text-secondary">{filteredItems.length}</span> môn học được đăng ký
           </span>
           <Select
             label="Số dòng:"
@@ -290,10 +364,15 @@ export default function SinhVienDangKyMonHocPage() {
     );
   }, [
     registrationsQuery.isPending,
-    registrationsQuery.data.length,
-    filterValue,
-    onSearchChange,
+    hasDepartmentFilter,
+    studentSearch,
+    handleSearch,
+    departmentFilter,
+    departmentsQuery.data,
+    handleFilter,
     visibleColumns,
+    registrationIsLoading,
+    filteredItems.length,
     rowsPerPage,
     onRowsPerPageChange,
     onClear,
@@ -362,9 +441,9 @@ export default function SinhVienDangKyMonHocPage() {
               )}
             </TableHeader>
             <TableBody
-              emptyContent={"Không tìm thấy giảng viên nào được phân công"}
+              emptyContent={"Không tìm thấy sinh viên nào đăng ký"}
               loadingContent={<Spinner label="Loading..." color="secondary" size="md" />}
-              isLoading={registrationsQuery.isPending}
+              isLoading={registrationIsLoading}
               items={sortedItems}>
               {(item) => (
                 <TableRow key={item.id}>

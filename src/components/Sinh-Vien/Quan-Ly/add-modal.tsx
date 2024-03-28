@@ -1,6 +1,16 @@
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useModalStore } from "@/stores/modal-store";
-import { Button, Input, Popover, PopoverTrigger, PopoverContent, Select, SelectItem } from "@nextui-org/react";
+import {
+  Button,
+  Input,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Select,
+  SelectItem,
+  Autocomplete,
+  AutocompleteItem,
+} from "@nextui-org/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -11,8 +21,10 @@ import { cn } from "@/lib/cn";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "@/components/ui/calendar";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
-import CrudModal from "../../crud-modal";
+import CrudModal from "@/components/crud-modal";
 import { StudentCreateParams, StudentResponse, studentCreate } from "@/api/students";
+import { ClassResponse, classGetAll } from "@/api/classes";
+import { useEffect } from "react";
 
 const currentYear = new Date().getFullYear();
 const lastTwoDigits = currentYear % 100;
@@ -29,8 +41,18 @@ const AddStudentModal = () => {
       email: "",
       address: "",
       phone: "",
+      department_id: "",
+      academic_year: "",
+      class_id: "",
     },
   });
+
+  const departmentId = addForm.watch("department_id");
+  const academicYear = addForm.watch("academic_year");
+
+  useEffect(() => {
+    addForm.setValue("class_id", "");
+  }, [addForm, departmentId, academicYear]);
 
   const { mutate: addMutate, isPending: addIsPending } = useMutation<
     ApiSuccessResponse<StudentResponse>,
@@ -63,6 +85,21 @@ const AddStudentModal = () => {
             }
           : oldData
       );
+      queryClient.setQueryData(["classes"], (oldData: ApiSuccessResponse<ClassResponse[]>) =>
+        oldData
+          ? {
+              ...oldData,
+              data: oldData.data.map((classItem) =>
+                classItem.id === res.data.class_id
+                  ? {
+                      ...classItem,
+                      students: [...classItem.students, res.data],
+                    }
+                  : classItem
+              ),
+            }
+          : oldData
+      );
       modalClose();
       addForm.reset();
     },
@@ -71,13 +108,23 @@ const AddStudentModal = () => {
     },
   });
 
-  const { data: departmentsData, isPending: departmentsIsPending } = useQuery<
+  const { data: departmentsData, isLoading: departmentsIsLoading } = useQuery<
     ApiSuccessResponse<DepartmentResponse[]>,
     ApiErrorResponse,
     DepartmentResponse[]
   >({
     queryKey: ["departments"],
     queryFn: async () => await departmentGetAll(),
+    select: (res) => res?.data,
+  });
+
+  const { data: classesData, isFetching: classesIsFetching } = useQuery<
+    ApiSuccessResponse<ClassResponse[]>,
+    ApiErrorResponse,
+    ClassResponse[]
+  >({
+    queryKey: ["classes"],
+    queryFn: async () => await classGetAll(),
     select: (res) => res?.data,
   });
 
@@ -91,8 +138,9 @@ const AddStudentModal = () => {
         birth_day: data.birth_day,
         phone: data.phone,
         gender: data.gender === "nu",
-        academic_year: parseInt(data.academic_year) % 100,
+        academic_year: parseInt(data.academic_year),
         department_id: parseInt(data.department_id),
+        class_id: data.class_id,
       });
     })();
   };
@@ -113,13 +161,14 @@ const AddStudentModal = () => {
                       isRequired
                       placeholder="John"
                       label="Họ"
-                      variant="faded"
+                      variant="bordered"
+                      color="secondary"
+                      errorMessage={addForm.formState.errors.first_name?.message}
                       onClear={() => addForm.resetField("first_name")}
-                      {...field}
                       autoFocus
+                      {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -134,12 +183,13 @@ const AddStudentModal = () => {
                       isRequired
                       placeholder="Wich"
                       label="Tên"
-                      variant="faded"
+                      variant="bordered"
+                      color="secondary"
+                      errorMessage={addForm.formState.errors.last_name?.message}
                       onClear={() => addForm.resetField("last_name")}
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -155,12 +205,13 @@ const AddStudentModal = () => {
                     isRequired
                     placeholder="john.wick@gmail.com"
                     label="Email"
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.email?.message}
                     onClear={() => addForm.resetField("email")}
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -175,12 +226,13 @@ const AddStudentModal = () => {
                     isRequired
                     placeholder="New York"
                     label="Địa chỉ"
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.address?.message}
                     onClear={() => addForm.resetField("address")}
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -197,9 +249,9 @@ const AddStudentModal = () => {
                           <Button
                             size="lg"
                             about="Chọn ngày sinh"
-                            variant="faded"
+                            variant="ghost"
                             className={cn(
-                              "pl-3 text-left font-normal",
+                              "pl-3 text-left text-sm",
                               !field.value && "text-muted-foreground",
                               !!addForm.formState.errors.birth_day && "border-danger text-danger"
                             )}>
@@ -232,16 +284,18 @@ const AddStudentModal = () => {
                     <Select
                       isInvalid={!!addForm.formState.errors.gender}
                       isRequired
-                      variant="faded"
+                      variant="bordered"
                       radius="lg"
                       label="Giới tính"
                       placeholder="Chọn giới tính"
+                      color="secondary"
+                      errorMessage={addForm.formState.errors.gender?.message}
                       size="sm"
                       {...field}>
-                      <SelectItem key="nam" value="nam">
+                      <SelectItem color="secondary" key="nam" value="nam">
                         Nam
                       </SelectItem>
-                      <SelectItem key="nu" value="nu">
+                      <SelectItem color="secondary" key="nu" value="nu">
                         Nữ
                       </SelectItem>
                     </Select>
@@ -262,7 +316,9 @@ const AddStudentModal = () => {
                     isRequired
                     placeholder="0123456789"
                     label="Số điện thoại"
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.phone?.message}
                     onClear={() => addForm.resetField("phone")}
                     {...field}
                   />
@@ -277,21 +333,31 @@ const AddStudentModal = () => {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Select
+                  <Autocomplete
+                    aria-label="Chọn khoa"
+                    label="Khoá học"
+                    placeholder="Nhập khoá học"
+                    radius="lg"
+                    variant="bordered"
+                    color="secondary"
                     isInvalid={!!addForm.formState.errors.academic_year}
-                    isRequired
-                    variant="faded"
+                    errorMessage={addForm.formState.errors.academic_year?.message}
+                    selectedKey={field.value}
+                    onSelectionChange={field.onChange}
                     disabledKeys={[field.value]}
-                    label="Chọn khoá học"
-                    onChange={field.onChange}
-                    selectedKeys={[field.value]}>
+                    isRequired
+                    allowsCustomValue
+                    {...field}>
                     {[...Array(lastTwoDigits)].map((_, index) => {
                       const year = 2000 + index + 1;
-                      return <SelectItem key={year}>{year + ""}</SelectItem>;
+                      return (
+                        <AutocompleteItem key={year} textValue={year + ""} className="capitalize">
+                          {year}
+                        </AutocompleteItem>
+                      );
                     })}
-                  </Select>
+                  </Autocomplete>
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -301,27 +367,74 @@ const AddStudentModal = () => {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Select
+                  <Autocomplete
+                    items={departmentsData ?? []}
+                    aria-label="Chọn khoa"
+                    placeholder="Nhập tên khoa"
+                    label="Chọn khoa"
+                    radius="lg"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.department_id?.message}
+                    selectedKey={field.value}
+                    onSelectionChange={field.onChange}
+                    disabledKeys={[field.value]}
                     isInvalid={!!addForm.formState.errors.department_id}
                     isRequired
-                    variant="faded"
-                    isLoading={departmentsIsPending}
-                    isDisabled={departmentsIsPending}
-                    disabledKeys={[field.value]}
-                    label="Chọn khoa"
-                    items={departmentsData ?? []}
-                    selectedKeys={[field.value]}
+                    isLoading={departmentsIsLoading}
+                    isDisabled={departmentsIsLoading}
+                    allowsCustomValue
                     {...field}>
                     {(item) => (
-                      <SelectItem key={item.id} className="capitalize">
+                      <AutocompleteItem key={item.id} textValue={item.name} className="capitalize">
                         {item.name}
-                      </SelectItem>
+                      </AutocompleteItem>
                     )}
-                  </Select>
+                  </Autocomplete>
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
+          />
+          <FormField
+            control={addForm.control}
+            name="class_id"
+            render={({ field }) => {
+              const classes = classesData?.filter(
+                (classItem) =>
+                  classItem.department_id === parseInt(departmentId) &&
+                  classItem.academic_year === parseInt(academicYear)
+              );
+              return (
+                <FormItem>
+                  <FormControl>
+                    <Autocomplete
+                      items={classes}
+                      aria-label="Chọn lớp"
+                      placeholder="Nhập tên lớp"
+                      label="Chọn lớp"
+                      radius="lg"
+                      variant="bordered"
+                      color="secondary"
+                      errorMessage={addForm.formState.errors.class_id?.message}
+                      selectedKey={field.value}
+                      onSelectionChange={field.onChange}
+                      disabledKeys={[field.value]}
+                      isInvalid={!!addForm.formState.errors.class_id}
+                      isRequired
+                      isLoading={classesIsFetching}
+                      isDisabled={classesIsFetching || !departmentId || !academicYear || classes?.length === 0}
+                      allowsCustomValue
+                      {...field}>
+                      {(item) => (
+                        <AutocompleteItem key={item?.id} textValue={item?.name} className="capitalize">
+                          {item.name}
+                        </AutocompleteItem>
+                      )}
+                    </Autocomplete>
+                  </FormControl>
+                </FormItem>
+              );
+            }}
           />
         </form>
       </Form>

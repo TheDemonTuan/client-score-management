@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { AddDepartmentFormValidate, AddDepartmentFormValidateSchema } from "./add.validate";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import CrudModal from "../crud-modal";
 
 const AddDepartmentModal = () => {
@@ -73,7 +73,9 @@ const AddDepartmentModal = () => {
                     placeholder="Nhập mã khoa"
                     isInvalid={!!addForm.formState.errors.id}
                     isRequired
-                    variant="faded"
+                    color="secondary"
+                    variant="bordered"
+                    errorMessage={addForm.formState.errors.id?.message}
                     type="number"
                     onClear={() => addForm.setValue("id", 0)}
                     {...field}
@@ -83,7 +85,6 @@ const AddDepartmentModal = () => {
                     }}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -98,12 +99,13 @@ const AddDepartmentModal = () => {
                     placeholder="Nhập ký hiệu khoa"
                     isInvalid={!!addForm.formState.errors.symbol}
                     isRequired
-                    variant="faded"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.symbol?.message}
+                    variant="bordered"
                     onClear={() => addForm.setValue("symbol", "")}
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -118,12 +120,13 @@ const AddDepartmentModal = () => {
                     placeholder="Nhập tên khoa"
                     isInvalid={!!addForm.formState.errors.name}
                     isRequired
-                    variant="faded"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.name?.message}
+                    variant="bordered"
                     onClear={() => addForm.resetField("name")}
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />

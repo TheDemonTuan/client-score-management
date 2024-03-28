@@ -15,6 +15,23 @@ export interface AssignmentGetAllParams {
 export const assignmentGetAll = async (params?: AssignmentGetAllParams) =>
   http.get<ApiSuccessResponse<AssignmentResponse[]>>(`assignments`).then((res) => res.data);
 
+//----------------------------------------------GET ALl BY DEPARTMENT ID----------------------------------------------
+export interface AssignmentGetAllByDepartmentIdParams {
+  id: string;
+}
+
+export const assignmentGetAllByDepartmentId = async (params: AssignmentGetAllByDepartmentIdParams) =>
+  http.get<ApiSuccessResponse<AssignmentResponse[]>>(`assignments/department/${params.id}`).then((res) => res.data);
+
+//----------------------------------------------GET ALL BY INSTRUCTOR NAME----------------------------------------------
+
+export interface AssignmentGetAllByInstructorNameParams {
+  name: string;
+}
+
+export const assignmentGetAllByInstructorName = async (params: AssignmentGetAllByInstructorNameParams) =>
+  http.get<ApiSuccessResponse<AssignmentResponse[]>>(`assignments/instructor/${params.name}`).then((res) => res.data);
+
 //----------------------------------------------CREATE----------------------------------------------
 export interface AssignmentCreateParams extends Pick<AssignmentResponse, "subject_id" | "instructor_id"> {}
 

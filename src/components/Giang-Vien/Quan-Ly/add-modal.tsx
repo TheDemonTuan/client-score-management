@@ -124,6 +124,7 @@ const AddInstructorModal = () => {
                       placeholder="John"
                       label="Họ"
                       variant="bordered"
+                      color="secondary"
                       errorMessage={addForm.formState.errors.first_name?.message}
                       onClear={() => addForm.resetField("first_name")}
                       {...field}
@@ -145,6 +146,7 @@ const AddInstructorModal = () => {
                       placeholder="Wich"
                       label="Tên"
                       variant="bordered"
+                      color="secondary"
                       errorMessage={addForm.formState.errors.last_name?.message}
                       onClear={() => addForm.resetField("last_name")}
                       {...field}
@@ -166,6 +168,7 @@ const AddInstructorModal = () => {
                     placeholder="john.wick@gmail.com"
                     label="Email"
                     variant="bordered"
+                    color="secondary"
                     errorMessage={addForm.formState.errors.email?.message}
                     onClear={() => addForm.resetField("email")}
                     {...field}
@@ -186,6 +189,7 @@ const AddInstructorModal = () => {
                     placeholder="New York"
                     label="Địa chỉ"
                     variant="bordered"
+                    color="secondary"
                     errorMessage={addForm.formState.errors.address?.message}
                     onClear={() => addForm.resetField("address")}
                     {...field}
@@ -209,7 +213,7 @@ const AddInstructorModal = () => {
                             about="Chọn ngày sinh"
                             variant="bordered"
                             className={cn(
-                              "pl-3 text-left font-normal",
+                              "pl-3 text-left text-sm",
                               !field.value && "text-muted-foreground",
                               !!addForm.formState.errors.birth_day && "border-danger text-danger"
                             )}>
@@ -246,6 +250,7 @@ const AddInstructorModal = () => {
                       radius="lg"
                       label="Giới tính"
                       placeholder="Chọn giới tính"
+                      color="secondary"
                       errorMessage={addForm.formState.errors.gender?.message}
                       size="sm"
                       {...field}>
@@ -273,6 +278,7 @@ const AddInstructorModal = () => {
                     placeholder="0123456789"
                     label="Số điện thoại"
                     variant="bordered"
+                    color="secondary"
                     errorMessage={addForm.formState.errors.phone?.message}
                     onClear={() => addForm.resetField("phone")}
                     {...field}
@@ -293,6 +299,7 @@ const AddInstructorModal = () => {
                     placeholder="Master"
                     label="Bằng cấp"
                     variant="bordered"
+                    color="secondary"
                     errorMessage={addForm.formState.errors.degree?.message}
                     onClear={() => addForm.resetField("degree")}
                     {...field}

@@ -4,47 +4,47 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
 import CrudModal from "../../crud-modal";
-import { AssignmentDeleteByIdParams, AssignmentResponse, assignmentDeleteById } from "@/api/assignment";
-import { InstructorReponse } from "@/api/instructors";
 import { SubjectResponse } from "@/api/subjects";
+import { RegistrationDeleteByIdParams, RegistrationResponse, registrationDeleteById } from "@/api/registration";
+import { StudentResponse } from "@/api/students";
 
-const DeleteInstructorAssignmentModal = () => {
+const DeleteStudentRegistrationModal = () => {
   const queryClient = useQueryClient();
 
   const { modalClose, modalData } = useModalStore(
     useShallow((state) => ({
       modalClose: state.modalClose,
-      modalData: state.modalData as AssignmentResponse,
+      modalData: state.modalData as RegistrationResponse,
     }))
   );
 
   const { mutate: deleteMutate, isPending: deleteIsPending } = useMutation<
     ApiSuccessResponse,
     ApiErrorResponse,
-    AssignmentDeleteByIdParams
+    RegistrationDeleteByIdParams
   >({
-    mutationFn: async (params) => await assignmentDeleteById(params),
+    mutationFn: async (params) => await registrationDeleteById(params),
     onSuccess: () => {
-      toast.success(`Xoá phân công thành công !`);
-      queryClient.setQueryData(["assignments"], (oldData: ApiSuccessResponse<AssignmentResponse[]>) =>
+      toast.success(`Xoá đăng ký thành công !`);
+      queryClient.setQueryData(["registrations"], (oldData: ApiSuccessResponse<RegistrationResponse[]>) =>
         oldData
           ? {
               ...oldData,
-              data: oldData.data.filter((assignment) => assignment.id !== modalData?.id),
+              data: oldData.data.filter((registration) => registration.id !== modalData?.id),
             }
           : oldData
       );
-      queryClient.setQueryData(["instructors"], (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
+      queryClient.setQueryData(["students"], (oldData: ApiSuccessResponse<StudentResponse[]>) =>
         oldData
           ? {
               ...oldData,
-              data: oldData.data.map((instructor) =>
-                instructor.id === modalData?.instructor_id
+              data: oldData.data.map((student) =>
+                student.id === modalData?.student_id
                   ? {
-                      ...instructor,
-                      assignments: instructor.assignments.filter((assignment) => assignment.id !== modalData?.id),
+                      ...student,
+                      registrations: student.registrations.filter((registration) => registration.id !== modalData?.id),
                     }
-                  : instructor
+                  : student
               ),
             }
           : oldData
@@ -57,8 +57,8 @@ const DeleteInstructorAssignmentModal = () => {
                 subject.id === modalData?.subject_id
                   ? {
                       ...subject,
-                      instructor_assignments: subject.instructor_assignments.filter(
-                        (assignment) => assignment.id !== modalData?.id
+                      student_registrations: subject.student_registrations.filter(
+                        (registration) => registration.id !== modalData?.id
                       ),
                     }
                   : subject
@@ -68,7 +68,7 @@ const DeleteInstructorAssignmentModal = () => {
       );
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Xoá phân công thất bại!");
+      toast.error(error?.response?.data?.message || "Xoá đăng ký thất bại!");
     },
     onSettled: () => {
       modalClose();
@@ -80,10 +80,10 @@ const DeleteInstructorAssignmentModal = () => {
   };
 
   return (
-    <CrudModal title="Xoá phân công" btnText="Xoá" isPending={deleteIsPending} handleSubmit={handleSubmit}>
-      <p>Bạn có đồng ý xoá phân công này ?</p>
+    <CrudModal title="Xoá đăng ký" btnText="Xoá" isPending={deleteIsPending} handleSubmit={handleSubmit}>
+      <p>Bạn có đồng ý xoá đăng ký này ?</p>
     </CrudModal>
   );
 };
 
-export default DeleteInstructorAssignmentModal;
+export default DeleteStudentRegistrationModal;

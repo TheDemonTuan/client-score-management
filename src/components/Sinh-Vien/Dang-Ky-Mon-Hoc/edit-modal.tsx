@@ -7,73 +7,68 @@ import { toast } from "react-toastify";
 import { useShallow } from "zustand/react/shallow";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
-import { EditInstructorAssignmentFormValidate, EditInstructorAssignmentFormValidateSchema } from "./edit.validate";
+import { EditStudentRegistrationFormValidate, EditStudentRegistrationFormValidateSchema } from "./edit.validate";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 import CrudModal from "../../crud-modal";
-import {
-  AssignmentResponse,
-  AssignmentUpdateByIdParams,
-  assignmentGetAll,
-  assignmentUpdateById,
-} from "@/api/assignment";
 import { SubjectResponse } from "@/api/subjects";
-import { InstructorReponse } from "@/api/instructors";
+import { StudentResponse } from "@/api/students";
+import { RegistrationResponse, RegistrationUpdateByIdParams, registrationGetAll, registrationUpdateById } from "@/api/registration";
 
-interface EditInstructorAssignmentModalData {
+interface EditStudentRegistrationModalData {
   department: DepartmentResponse;
-  instructor: InstructorReponse;
+  student: StudentResponse;
   subject: SubjectResponse;
-  assignment: AssignmentResponse;
+  registration: RegistrationResponse;
 }
 
-const EditInstructorAssignmentModal = () => {
+const EditStudentRegistrationModal = () => {
   const queryClient = useQueryClient();
 
   const { modalClose, modalData } = useModalStore(
     useShallow((state) => ({
       modalClose: state.modalClose,
-      modalData: state.modalData as EditInstructorAssignmentModalData,
+      modalData: state.modalData as EditStudentRegistrationModalData,
     }))
   );
 
-  const editForm = useForm<EditInstructorAssignmentFormValidate>({
-    resolver: zodResolver(EditInstructorAssignmentFormValidateSchema),
+  const editForm = useForm<EditStudentRegistrationFormValidate>({
+    resolver: zodResolver(EditStudentRegistrationFormValidateSchema),
     values: {
       department_id: modalData?.department?.id + "",
-      instructor_id: modalData?.assignment.instructor_id + "",
-      subject_id: modalData?.assignment.subject_id + "",
+      student_id: modalData?.registration.student_id + "",
+      subject_id: modalData?.registration.subject_id + "",
     },
   });
 
   const { mutate: editMutate, isPending: editIsPending } = useMutation<
-    ApiSuccessResponse<AssignmentResponse>,
+    ApiSuccessResponse<RegistrationResponse>,
     ApiErrorResponse,
-    AssignmentUpdateByIdParams
+    RegistrationUpdateByIdParams
   >({
-    mutationFn: async (params) => await assignmentUpdateById(params),
+    mutationFn: async (params) => await registrationUpdateById(params),
     onSuccess: (res) => {
-      toast.success("Cập nhật giảng viên thành công !");
-      queryClient.setQueryData(["assignments"], (oldData: ApiSuccessResponse<AssignmentResponse[]>) =>
+      toast.success("Cập nhật đăng ký thành công !");
+      queryClient.setQueryData(["registrations"], (oldData: ApiSuccessResponse<RegistrationResponse[]>) =>
         oldData
           ? {
               ...oldData,
-              data: oldData.data.map((assignment) => (assignment.id === res.data.id ? res.data : assignment)),
+              data: oldData.data.map((registration) => (registration.id === res.data.id ? res.data : registration)),
             }
           : oldData
       );
-      queryClient.setQueryData(["instructors"], (oldData: ApiSuccessResponse<InstructorReponse[]>) =>
+      queryClient.setQueryData(["students"], (oldData: ApiSuccessResponse<StudentResponse[]>) =>
         oldData
           ? {
               ...oldData,
-              data: oldData.data.map((instructor) =>
-                instructor.id === res.data.instructor_id
+              data: oldData.data.map((student) =>
+                student.id === res.data.student_id
                   ? {
-                      ...instructor,
-                      assignments: instructor.assignments.map((assignment) =>
-                        assignment.id === res.data.id ? res.data : assignment
+                      ...student,
+                      registrations: student.registrations.map((registration) =>
+                        registration.id === res.data.id ? res.data : registration
                       ),
                     }
-                  : instructor
+                  : student
               ),
             }
           : oldData
@@ -86,8 +81,8 @@ const EditInstructorAssignmentModal = () => {
                 subject.id === res.data.subject_id
                   ? {
                       ...subject,
-                      instructor_assignments: subject.instructor_assignments.map((assignment) =>
-                        assignment.id === res.data.id ? res.data : assignment
+                      student_registrations: subject.student_registrations.map((registration) =>
+                        registration.id === res.data.id ? res.data : registration
                       ),
                     }
                   : subject
@@ -98,7 +93,7 @@ const EditInstructorAssignmentModal = () => {
       modalClose();
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Cập nhật giảng viên thất bại!");
+      toast.error(error?.response?.data?.message || "Cập nhật đăng ký thất bại!");
     },
   });
 
@@ -112,30 +107,30 @@ const EditInstructorAssignmentModal = () => {
     select: (res) => res?.data,
   });
 
-  const { data: assignmentsData, isPending: assignmentsIsPending } = useQuery<
-    ApiSuccessResponse<AssignmentResponse[]>,
+  const { data: registrationsData, isPending: registrationsIsPending } = useQuery<
+    ApiSuccessResponse<RegistrationResponse[]>,
     ApiErrorResponse,
-    AssignmentResponse[]
+    RegistrationResponse[]
   >({
-    queryKey: ["assignments"],
-    queryFn: async () => await assignmentGetAll(),
+    queryKey: ["registrations"],
+    queryFn: async () => await registrationGetAll(),
     select: (res) => res?.data,
   });
 
   const handleSubmit = () => {
-    editForm.handleSubmit((data: EditInstructorAssignmentFormValidate) => {
+    editForm.handleSubmit((data: EditStudentRegistrationFormValidate) => {
       console.log(data);
 
       editMutate({
-        id: modalData?.assignment.id,
-        instructor_id: data.instructor_id,
+        id: modalData?.registration.id,
+        student_id: data.student_id,
         subject_id: data.subject_id,
       });
     })();
   };
 
   return (
-    <CrudModal title="Chỉnh sửa giảng viên" btnText="Cập nhật" isPending={editIsPending} handleSubmit={handleSubmit}>
+    <CrudModal title="Chỉnh sửa đăng ký" btnText="Cập nhật" isPending={editIsPending} handleSubmit={handleSubmit}>
       <Form {...editForm}>
         <form method="post" className="space-y-4">
           <FormField
@@ -147,7 +142,7 @@ const EditInstructorAssignmentModal = () => {
                   <Autocomplete
                     aria-label={modalData.department.name}
                     placeholder={modalData.department.name}
-                    label="Chọn khoa phân công"
+                    label="Chọn khoa đăng ký"
                     radius="lg"
                     variant="bordered"
                     color="secondary"
@@ -169,19 +164,19 @@ const EditInstructorAssignmentModal = () => {
           />
           <FormField
             control={editForm.control}
-            name="instructor_id"
+            name="student_id"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <Autocomplete
-                    aria-label={modalData.instructor.first_name + " " + modalData.instructor.last_name}
-                    placeholder={modalData.instructor.first_name + " " + modalData.instructor.last_name}
-                    label="Chọn giảng viên phân công"
+                    aria-label={modalData.student.first_name + " " + modalData.student.last_name}
+                    placeholder={modalData.student.first_name + " " + modalData.student.last_name}
+                    label="Chọn giảng viên đăng ký"
                     radius="lg"
                     variant="bordered"
                     color="secondary"
-                    errorMessage={editForm.formState.errors.instructor_id?.message}
-                    isInvalid={!!editForm.formState.errors.instructor_id}
+                    errorMessage={editForm.formState.errors.student_id?.message}
+                    isInvalid={!!editForm.formState.errors.student_id}
                     isDisabled
                     isRequired
                     selectedKey={field.value}
@@ -189,9 +184,9 @@ const EditInstructorAssignmentModal = () => {
                     isClearable={false}
                     {...field}>
                     <AutocompleteItem
-                      key={modalData.instructor.id}
-                      textValue={modalData.instructor.first_name + " " + modalData.instructor.last_name}>
-                      {modalData.instructor.first_name + " " + modalData.instructor.last_name}
+                      key={modalData.student.id}
+                      textValue={modalData.student.first_name + " " + modalData.student.last_name}>
+                      {modalData.student.first_name + " " + modalData.student.last_name}
                     </AutocompleteItem>
                   </Autocomplete>
                 </FormControl>
@@ -210,23 +205,23 @@ const EditInstructorAssignmentModal = () => {
                     }
                     aria-label={modalData.subject.name}
                     placeholder={modalData.subject.name}
-                    label="Chọn môn học phân công"
+                    label="Chọn môn học đăng ký"
                     radius="lg"
                     variant="bordered"
                     color="secondary"
                     errorMessage={editForm.formState.errors.subject_id?.message}
-                    isDisabled={assignmentsIsPending}
-                    isLoading={assignmentsIsPending}
+                    isDisabled={registrationsIsPending}
+                    isLoading={registrationsIsPending}
                     disabledKeys={[
                       field.value,
-                      ...(assignmentsData?.map((assignment) => {
-                        if (assignment.instructor_id === modalData.instructor.id) return assignment.subject_id;
+                      ...(registrationsData?.map((registration) => {
+                        if (registration.student_id === modalData.student.id) return registration.subject_id;
                         return "";
                       }) ?? []),
                     ]}
                     selectedKey={field.value}
                     onSelectionChange={field.onChange}
-                    isInvalid={!!editForm.formState.errors.instructor_id}
+                    isInvalid={!!editForm.formState.errors.subject_id}
                     isRequired
                     defaultSelectedKey={field.value}
                     isClearable={false}
@@ -248,4 +243,4 @@ const EditInstructorAssignmentModal = () => {
   );
 };
 
-export default EditInstructorAssignmentModal;
+export default EditStudentRegistrationModal;

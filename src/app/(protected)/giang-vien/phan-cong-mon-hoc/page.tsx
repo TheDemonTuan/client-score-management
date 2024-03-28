@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ChangeEvent, Key, useCallback, useMemo, useState } from "react";
+import React, { ChangeEvent, Key, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -27,14 +27,19 @@ import { capitalize } from "@/lib/capitalize";
 import { FaPlus } from "react-icons/fa6";
 import { RiArrowDownSLine } from "react-icons/ri";
 import { IoSearchOutline } from "react-icons/io5";
-import { useSuspenseQueries } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
 import { ApiSuccessResponse } from "@/lib/http";
 import { MdOutlineDelete } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
 import { useModalStore } from "@/stores/modal-store";
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { AssignmentResponse, assignmentGetAll } from "@/api/assignment";
+import {
+  AssignmentResponse,
+  assignmentGetAll,
+  assignmentGetAllByDepartmentId,
+  assignmentGetAllByInstructorName,
+} from "@/api/assignment";
 import {
   AddInstructorAssignmentModal,
   DeleteInstructorAssignmentModal,
@@ -43,6 +48,7 @@ import {
   deleteInstructorAssignmentModalKey,
   editInstructorAssignmentModalKey,
 } from "@/components/Giang-Vien/Phan-Cong-Mon-Hoc/modal";
+import _ from "lodash";
 
 const columns = [
   { name: "Mã", uid: "id", sortable: true },
@@ -55,15 +61,19 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["id", "full_name", "subject_name", "department_id", "created_at", "actions"];
 
 export default function GiangVienPhanCongMonHocPage() {
-  const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({});
+  const [departmentFilter, setDepartmentFilter] = useState<string>("");
+  const [instructorSearch, setInstructorSearch] = useState<string>("");
+  const [canInstructorSearch, setCanInstructorSearch] = useState<string>("");
+  const queryClient = useQueryClient();
+
+  const hasDepartmentFilter = Boolean(departmentFilter);
+  const hasInstructorSearch = Boolean(canInstructorSearch);
 
   const [page, setPage] = useState(1);
-
-  const hasSearchFilter = Boolean(filterValue);
 
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return columns;
@@ -87,21 +97,73 @@ export default function GiangVienPhanCongMonHocPage() {
     ],
   });
 
+  const { data: filterAssignmentsData, isFetching: filterAssignmentsIsFetching } = useQuery({
+    queryKey: ["assignments", "department", { id: departmentFilter }],
+    queryFn: async () => await assignmentGetAllByDepartmentId({ id: departmentFilter }),
+    enabled: hasDepartmentFilter,
+    select: (res: ApiSuccessResponse<AssignmentResponse[]>) => res?.data,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+
+  const handleFilter = useCallback((query: Selection) => {
+    setDepartmentFilter(Array.from(query)?.at(0) as string);
+  }, []);
+
+  const { data: searchRegistrationsData, isFetching: searchRegistrationsIsFetching } = useQuery({
+    queryKey: ["assignments", "instructor", { name: canInstructorSearch }],
+    queryFn: async () => await assignmentGetAllByInstructorName({ name: canInstructorSearch }),
+    enabled: hasInstructorSearch,
+    select: (res: ApiSuccessResponse<AssignmentResponse[]>) => res?.data,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedHandleSearch = useCallback(
+    _.debounce((keywork: string) => {
+      setCanInstructorSearch(keywork);
+    }, 1000),
+    []
+  );
+
+  const handleSearch = useCallback(
+    (keywork: string) => {
+      setCanInstructorSearch("");
+      setInstructorSearch(keywork);
+      debouncedHandleSearch(keywork);
+    },
+    [debouncedHandleSearch]
+  );
+
+  const assignmentIsLoading =
+    departmentsQuery.isPending ||
+    assignmentsQuery.isPending ||
+    filterAssignmentsIsFetching ||
+    searchRegistrationsIsFetching;
+
   const { modalOpen, setModalData, modelKey } = useModalStore();
+
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] === "assignments" && query.queryKey[1] === "department",
+      });
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] === "assignments" && query.queryKey[1] === "instructor",
+      });
+    };
+  }, [queryClient]);
 
   //End My Logic
 
   const filteredItems = useMemo(() => {
-    let filteredAssignments = [...(assignmentsQuery.data ?? [])];
+    if (searchRegistrationsData) return searchRegistrationsData;
 
-    if (hasSearchFilter) {
-      filteredAssignments = filteredAssignments.filter((assignment) =>
-        assignment.instructor_id.toLowerCase().includes(filterValue.toLowerCase())
-      );
-    }
+    if (filterAssignmentsData) return filterAssignmentsData;
 
-    return filteredAssignments;
-  }, [assignmentsQuery.data, hasSearchFilter, filterValue]);
+    return assignmentsQuery.data;
+  }, [filterAssignmentsData, searchRegistrationsData, assignmentsQuery.data]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -194,17 +256,8 @@ export default function GiangVienPhanCongMonHocPage() {
     setPage(1);
   }, []);
 
-  const onSearchChange = useCallback((value?: string) => {
-    if (value) {
-      setFilterValue(value);
-      setPage(1);
-    } else {
-      setFilterValue("");
-    }
-  }, []);
-
   const onClear = useCallback(() => {
-    setFilterValue("");
+    setInstructorSearch("");
     setPage(1);
   }, []);
 
@@ -214,16 +267,43 @@ export default function GiangVienPhanCongMonHocPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <Input
             isClearable
-            isDisabled={assignmentsQuery.isPending}
+            isDisabled={assignmentIsLoading || hasDepartmentFilter}
             className="w-full sm:max-w-[40%]"
-            placeholder="Tìm kiếm tên môn học hoặc giảng viên..."
+            placeholder="Tìm kiếm tên giảng viên..."
             variant="underlined"
             startContent={<IoSearchOutline size={24} />}
-            value={filterValue}
+            value={instructorSearch}
             onClear={() => onClear()}
-            onValueChange={onSearchChange}
+            onValueChange={handleSearch}
           />
           <div className="grid grid-flow-col gap-2 justify-between">
+            <Dropdown className="col-span-1">
+              <DropdownTrigger className="hidden sm:flex">
+                <Button
+                  endContent={<RiArrowDownSLine className="text-small" />}
+                  variant="ghost"
+                  isDisabled={Boolean(instructorSearch)}>
+                  {departmentFilter
+                    ? departmentsQuery.data.find((department) => department.id == parseInt(departmentFilter))?.name
+                    : "Lọc theo khoa"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Table Columns"
+                closeOnSelect={true}
+                color="secondary"
+                items={departmentsQuery.data}
+                defaultSelectedKeys={[departmentFilter]}
+                selectedKeys={[departmentFilter]}
+                selectionMode="single"
+                onSelectionChange={handleFilter}>
+                {(item) => (
+                  <DropdownItem key={item.id} className="capitalize">
+                    {capitalize(item.name)}
+                  </DropdownItem>
+                )}
+              </DropdownMenu>
+            </Dropdown>
             <Dropdown className="col-span-1 text-sm md:text-base">
               <DropdownTrigger className="hidden sm:flex">
                 <Button endContent={<RiArrowDownSLine className="text-small" />} variant="ghost">
@@ -250,7 +330,7 @@ export default function GiangVienPhanCongMonHocPage() {
               variant="shadow"
               className="text-sm md:text-base col-span-2 sm:col-span-1"
               endContent={<FaPlus />}
-              isLoading={assignmentsQuery.isPending}>
+              isLoading={assignmentIsLoading}>
               Thêm phân công mới
             </Button>
           </div>
@@ -283,17 +363,7 @@ export default function GiangVienPhanCongMonHocPage() {
         </div>
       </div>
     );
-  }, [
-    assignmentsQuery.isPending,
-    assignmentsQuery.data.length,
-    filterValue,
-    onSearchChange,
-    visibleColumns,
-    rowsPerPage,
-    onRowsPerPageChange,
-    onClear,
-    modalOpen,
-  ]);
+  }, [assignmentIsLoading, hasDepartmentFilter, instructorSearch, handleSearch, hasInstructorSearch, departmentFilter, departmentsQuery.data, handleFilter, visibleColumns, assignmentsQuery.data.length, rowsPerPage, onRowsPerPageChange, onClear, modalOpen]);
 
   const bottomContent = useMemo(() => {
     return (
@@ -359,7 +429,7 @@ export default function GiangVienPhanCongMonHocPage() {
             <TableBody
               emptyContent={"Không tìm thấy giảng viên nào được phân công"}
               loadingContent={<Spinner label="Loading..." color="secondary" size="md" />}
-              isLoading={assignmentsQuery.isPending}
+              isLoading={assignmentIsLoading}
               items={sortedItems}>
               {(item) => (
                 <TableRow key={item.id}>

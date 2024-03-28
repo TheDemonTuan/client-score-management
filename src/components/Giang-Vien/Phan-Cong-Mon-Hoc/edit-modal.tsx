@@ -52,7 +52,7 @@ const EditInstructorAssignmentModal = () => {
   >({
     mutationFn: async (params) => await assignmentUpdateById(params),
     onSuccess: (res) => {
-      toast.success("Cập nhật giảng viên thành công !");
+      toast.success("Cập nhật phân công thành công !");
       queryClient.setQueryData(["assignments"], (oldData: ApiSuccessResponse<AssignmentResponse[]>) =>
         oldData
           ? {
@@ -98,7 +98,7 @@ const EditInstructorAssignmentModal = () => {
       modalClose();
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Cập nhật giảng viên thất bại!");
+      toast.error(error?.response?.data?.message || "Cập nhật phân công thất bại!");
     },
   });
 
@@ -135,7 +135,7 @@ const EditInstructorAssignmentModal = () => {
   };
 
   return (
-    <CrudModal title="Chỉnh sửa giảng viên" btnText="Cập nhật" isPending={editIsPending} handleSubmit={handleSubmit}>
+    <CrudModal title="Chỉnh sửa phân công" btnText="Cập nhật" isPending={editIsPending} handleSubmit={handleSubmit}>
       <Form {...editForm}>
         <form method="post" className="space-y-4">
           <FormField
@@ -226,7 +226,7 @@ const EditInstructorAssignmentModal = () => {
                     ]}
                     selectedKey={field.value}
                     onSelectionChange={field.onChange}
-                    isInvalid={!!editForm.formState.errors.instructor_id}
+                    isInvalid={!!editForm.formState.errors.subject_id}
                     isRequired
                     defaultSelectedKey={field.value}
                     isClearable={false}

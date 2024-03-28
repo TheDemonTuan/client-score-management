@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const EditInstructorAssignmentFormValidateSchema = z.object({
+export const EditStudentRegistrationFormValidateSchema = z.object({
   department_id: z
     .string({
       required_error: "Khoa không được để trống.",
@@ -8,12 +8,12 @@ export const EditInstructorAssignmentFormValidateSchema = z.object({
     })
     .min(1, "Khoa không được để trống.")
     .trim(),
-  instructor_id: z
+  student_id: z
     .string({
-      required_error: "Giảng viên không được để trống.",
-      invalid_type_error: "Giảng viên không hợp lệ.",
+      required_error: "Sinh viên không được để trống.",
+      invalid_type_error: "Sinh viên không hợp lệ.",
     })
-    .min(1, "Giảng viên không được để trống.")
+    .min(1, "Sinh viên không được để trống.")
     .trim(),
   subject_id: z
     .string({
@@ -24,4 +24,4 @@ export const EditInstructorAssignmentFormValidateSchema = z.object({
     .trim(),
 });
 
-export type EditInstructorAssignmentFormValidate = z.infer<typeof EditInstructorAssignmentFormValidateSchema>;
+export type EditStudentRegistrationFormValidate = z.infer<typeof EditStudentRegistrationFormValidateSchema>;

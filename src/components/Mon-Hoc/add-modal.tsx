@@ -1,7 +1,7 @@
 import { DepartmentResponse, departmentGetAll } from "@/api/departments";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/lib/http";
 import { useModalStore } from "@/stores/modal-store";
-import { Input, Select, SelectItem } from "@nextui-org/react";
+import { Autocomplete, AutocompleteItem, Input, Select, SelectItem } from "@nextui-org/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -78,6 +78,12 @@ const AddSubjectModal = () => {
 
   const handleSubmit = () => {
     addForm.handleSubmit((data: AddSubjectFormValidate) => {
+      if(data?.process_percentage + data?.midterm_percentage + data?.final_percentage !== 100) {
+        addForm.setError("process_percentage", { type: "manual", message: "Tổng % không bằng 100" });
+        addForm.setError("midterm_percentage", { type: "manual", message: "Tổng % không bằng 100" });
+        addForm.setError("final_percentage", { type: "manual", message: "Tổng % không bằng 100" });
+        return;
+      }
       addMutate({
         name: data?.name,
         credits: data?.credits,
@@ -105,12 +111,13 @@ const AddSubjectModal = () => {
                     placeholder="Nhập tên môn học"
                     isInvalid={!!addForm.formState.errors.name}
                     isRequired
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.name?.message}
                     onClear={() => addForm.setValue("name", "")}
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -126,8 +133,10 @@ const AddSubjectModal = () => {
                     placeholder="Nhập số tín chỉ"
                     isInvalid={!!addForm.formState.errors.credits}
                     isRequired
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
                     type="number"
+                    errorMessage={addForm.formState.errors.credits?.message}
                     onClear={() => addForm.setValue("credits", 0)}
                     {...field}
                     value={addForm.getValues("credits") + ""}
@@ -136,7 +145,6 @@ const AddSubjectModal = () => {
                     }}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -152,7 +160,9 @@ const AddSubjectModal = () => {
                     placeholder="Nhập % quá trình"
                     isInvalid={!!addForm.formState.errors.process_percentage}
                     isRequired
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.process_percentage?.message}
                     endContent={
                       <div className="pointer-events-none flex items-center">
                         <span className="text-default-400 text-small">%</span>
@@ -167,7 +177,6 @@ const AddSubjectModal = () => {
                     }}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -183,7 +192,9 @@ const AddSubjectModal = () => {
                     placeholder="% giữa kì"
                     isInvalid={!!addForm.formState.errors.midterm_percentage}
                     isRequired
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.midterm_percentage?.message}
                     endContent={
                       <div className="pointer-events-none flex items-center">
                         <span className="text-default-400 text-small">%</span>
@@ -198,7 +209,6 @@ const AddSubjectModal = () => {
                     }}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -214,7 +224,9 @@ const AddSubjectModal = () => {
                     placeholder="% cuối kì"
                     isInvalid={!!addForm.formState.errors.final_percentage}
                     isRequired
-                    variant="faded"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.final_percentage?.message}
                     endContent={
                       <div className="pointer-events-none flex items-center">
                         <span className="text-default-400 text-small">%</span>
@@ -229,7 +241,6 @@ const AddSubjectModal = () => {
                     }}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -239,27 +250,31 @@ const AddSubjectModal = () => {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Select
+                  <Autocomplete
+                    items={departmentsData ?? []}
+                    aria-label="Chọn khoa"
+                    placeholder="Nhập tên khoa"
+                    label="Chọn khoa"
+                    radius="lg"
+                    variant="bordered"
+                    color="secondary"
+                    errorMessage={addForm.formState.errors.department_id?.message}
+                    selectedKey={field.value}
+                    onSelectionChange={field.onChange}
+                    disabledKeys={[field.value]}
                     isInvalid={!!addForm.formState.errors.department_id}
                     isRequired
-                    variant="faded"
                     isLoading={departmentsIsPending}
                     isDisabled={departmentsIsPending}
-                    disabledKeys={[field.value]}
-                    label="Chọn khoa"
+                    allowsCustomValue
                     {...field}>
-                    {departmentsData ? (
-                      departmentsData.map((department) => (
-                        <SelectItem key={department.id} value={department.id}>
-                          {department.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <></>
+                    {(item) => (
+                      <AutocompleteItem key={item.id} textValue={item.name} className="capitalize">
+                        {item.name}
+                      </AutocompleteItem>
                     )}
-                  </Select>
+                  </Autocomplete>
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
